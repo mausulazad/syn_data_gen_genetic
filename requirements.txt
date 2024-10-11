@@ -1,0 +1,11 @@
+numpy==1.24.3
+pyarrow==11.*
+protobuf==4.21.*
+pandas==1.5.3
+dask==2023.7.1
+shapely==2.0.1
+keras==2.15.0
+bitsandbytes==0.41.3 
+accelerate>=0.26.0
+datasets
+ultralytics
