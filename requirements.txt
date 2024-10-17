@@ -9,3 +9,5 @@ bitsandbytes==0.41.3
 accelerate>=0.26.0
 datasets
 ultralytics
+einops
+torchvision

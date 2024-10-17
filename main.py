@@ -16,6 +16,7 @@ def main():
     generator_models = args.generator_models
     judge_model = args.judge_model
     br_model = args.br_model
+
     generate_qars(dataset, generator_models, judge_model, br_model)
 
 if __name__ == "__main__":
