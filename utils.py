@@ -1,7 +1,10 @@
 import requests
 import torch
 from PIL import Image
-from transformers import MllamaForConditionalGeneration, AutoProcessor
+from typing import Dict
+from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, GenerationConfig
+
+from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 
 from datasets import load_dataset
 from models import MLLM, Judge, BackwardReasoner
@@ -23,13 +26,31 @@ def setup_llama32():
     processor = AutoProcessor.from_pretrained(model_id)
     return (model, processor)
 
+def setup_molmo():
+    model_id = "allenai/Molmo-7B-D-0924"
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype='auto',
+        device_map='auto'
+    )
+    processor = AutoProcessor.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype='auto',
+        device_map='auto'
+    )
+    return (model, processor)
+
 def setup_generator_models(generator_models):
     generator_mllms = []
     for model_name in generator_models:
         if model_name == "llama32":
             model, processor = setup_llama32()
             generator_mllms.append(MLLM(model, processor, inference_type='generate'))
-        # TODO: add other generator mllms (i.e. llava vision, molmo)
+        elif model_name == "molmo":
+            model, processor = setup_molmo()
+            generator_mllms.append(MLLM(model, processor, inference_type='generate'))
     return generator_mllms
 
 def setup_judge_models(judge_models):
