@@ -18,11 +18,15 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     # query = "Can you describe the activity of the animal in context of the image?"
     #query = "Can you generate 3 non-trivial, diverse questions and corresponding answers based on the image without hallucinating? Keep the answers precise and short (no over explanation).Return the question-answer pairs in a list following this structure: [{'question': <question>, 'answer': <answer>}]. Return only the list of JSON objects, nothing else."
     query_1 = "Can you generate 3 non-trivial, diverse questions based on the image without hallucinating?  Each question can not have sub-questions. Return the questions in a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
-    questions = generator_mllms[0].generate(image, query_1, questions=None)
-
     query_2 = 'You will be given an image and 3 questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
-    syn_qars = generator_mllms[0].generate(image, query_2, questions)
-    syn_qars = json.loads(syn_qars)
+    all_syn_qars = {}
+    for i, mllm in enumerate(generator_mllms):
+        questions = mllm.generate(image, query_1, questions=None)
+        syn_qars = mllm.generate(image, query_2, questions)
+        syn_qars = json.loads(syn_qars)
+        all_syn_qars[f'mllm_{i+1}'] = {}
+        for j, qar in enumerate(syn_qars):
+            all_syn_qars[f'mllm_{i+1}'][f'qar_{j+1}'] = qar
     
     # step 3: judge them using judge mllm
 
