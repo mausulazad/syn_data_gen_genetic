@@ -1,11 +1,17 @@
 import requests
 import json
+import copy
 import torch
 from PIL import Image
+
+import sys
+import warnings
+import os
 
 from utils import load_and_preprocess_dataset, setup_models
 
 def generate_qars(dataset, generator_models, judge_model, br_model):
+    # TODO: load aokvqa/scienceqa dataset
     # step 0: load and preprocess dataset
     #data = load_and_preprocess_dataset(dataset)
     url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/0052a70beed5bf71b92610a43a52df6d286cd5f3/diffusers/rabbit.jpg"
@@ -14,6 +20,7 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     # step 1: load models
     generator_mllms = setup_models(generator_models, judge_model, br_model)
 
+    '''
     # step 2: generate qars
     # query = "Can you describe the activity of the animal in context of the image?"
     #query = "Can you generate 3 non-trivial, diverse questions and corresponding answers based on the image without hallucinating? Keep the answers precise and short (no over explanation).Return the question-answer pairs in a list following this structure: [{'question': <question>, 'answer': <answer>}]. Return only the list of JSON objects, nothing else."
@@ -27,8 +34,9 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
         all_syn_qars[f'mllm_{i+1}'] = {}
         for j, qar in enumerate(syn_qars):
             all_syn_qars[f'mllm_{i+1}'][f'qar_{j+1}'] = qar
+    '''
     
-    # step 3: judge them using judge mllm
+    # step 3: judge (soft filter) qars using judge mllm
 
     # step 4: do inference verification using backward reasoner mllm
 
