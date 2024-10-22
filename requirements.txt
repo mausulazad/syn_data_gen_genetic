@@ -11,3 +11,5 @@ datasets
 ultralytics
 einops
 torchvision
+flash-attn
+sentence-transformers
