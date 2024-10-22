@@ -134,16 +134,18 @@ class Judge(MLLM):
         self.system_prompt = ("You will be given an image and a question, corresponding answer, and rationale of that answer (qar)."
                 "The qar is synthetically generated. Please serve as an unbiased and fair judge to evaluate the quality of question, answer, and rationale." 
                 "Score the response out of 100 and then think and explain in your own words the reasoning for the score with specific details."
-                "Use a list-like structure as output: [<score>, <feedback>]. Nothing else.")
+                "Use a list-like structure as output: [score, feedback inside double-quotes]. Nothing else.")
 
     # base-64 encoded image
-    def judge_qars(self, qars, image):
+    def evaluate(self, qars, image):
         if self.model_family == "phi_3_vision":
-            for qar in qars:
+            for i, qar in enumerate(qars):
                 output = self.generate_using_phi3(image, str(qar))
                 output = output.strip()
+                print(output)
                 score, feedback = ast.literal_eval(output)
-                qar["score"], qar["feedback"] = score, feedback
+                qars[i]["score"], qars[i]["feedback"] = score, feedback
+        return qars
 
 
 class BackwardReasoner(MLLM):

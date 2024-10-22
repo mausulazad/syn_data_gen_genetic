@@ -171,12 +171,12 @@ def setup_backward_reasoning_models(br_models):
     return br_mllms
 
 def setup_models(generator_models, judge_model, br_model):
+    generator_mllms = []
     #generator_mllms = setup_generator_models(generator_models)
     #judge_mllm = setup_judge_models([judge_model])[0]
-    setup_judge_models([judge_model])
+    judge_mllm = setup_judge_models([judge_model])[0]
     #br_mllm = setup_backward_reasoning_models([br_model])[0]
     
     #return (generator_mllms, judge_mllm, br_mllm)
-    #return (generator_mllms, judge_mllm)
+    return (generator_mllms, judge_mllm)
     #return (generator_mllms) 
-    return (1)
