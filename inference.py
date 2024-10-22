@@ -16,7 +16,7 @@ def judge_qars(qars, image, judge_mllm):
     return qars
 
 def verify_inference(qars, image, br_mllm):
-    pass
+    qars = br_mllm.verify_inference(qars, image)
 
 def generate_qars(dataset, generator_models, judge_model, br_model):
     # TODO: load aokvqa/scienceqa dataset
@@ -26,7 +26,7 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     image = Image.open(requests.get(url, stream=True).raw)
 
     # Step 1: Load models
-    #generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
 
     '''
     # Step 2: Generate qars
@@ -106,6 +106,22 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
             }
         }
     }
+
+    inference_verified_qars = []
+    for mllm in all_syn_qars:
+        judged_syn_qars = []
+        for qar in all_syn_qars[mllm]:
+            judged_syn_qars.append(all_syn_qars[mllm][qar])
+
+        inference_verified_qars = verify_inference(judged_syn_qars, image, br_mllm)
+        break
+        
+        """
+        i = 0
+        for qar in all_syn_qars[mllm]:
+            all_syn_qars[mllm][qar] = judged_qars[i]
+            i += 1
+        """
 
 
 
