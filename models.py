@@ -1,6 +1,10 @@
 import ast
+import pprint
 
+import torch
 from transformers import GenerationConfig
+
+from sentence_transformers import SentenceTransformer, util
 
 
 class MLLM:
@@ -22,7 +26,7 @@ class MLLM:
             prompt = "You are an helpful assistant. Given an answer and image, you try to infer the corresponding question."
         return prompt
 
-    def generate_using_llama32(self, image, query, questions):
+    def generate_using_llama32(self, image, query, questions=None):
         if questions is None:
             messages = [
                 {
@@ -150,42 +154,55 @@ class Judge(MLLM):
 class BackwardReasoner(MLLM):
     def __init__(self, model, processor, model_family, inference_type):
         super().__init__(model, processor, model_family, inference_type)
-        self.system_prompt = ("You are a helpful assistant designed to infer questions based on visual and textual inputs."
-            "You will be provided with an image, as well as  one (answer, rationale) pair. Based on these inputs, your task is to infer"
+        self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        self.system_prompt = ("You are a helpful assistant designed to infer questions based on visual and textual inputs. "
+            "You will be provided with an image, as well as  one (answer, rationale) pair. Based on these inputs, your task is to infer "
             "the most appropriate questions that could have led to the given answers and rationales.\n\n"
-            "Here is how you will approach the task:"
-            "1. Analyze the image and understand its context."
-            "2. Review the (answer, rationale) pair in connection with the image."
-            "3. Infer the possible questions that would logically result in the given answer and rationale within the context of the image."
-            "Provide a list of the top 3 most likely questions for the (answer, rationale) pair.\n\n"
+            "Here is how you will approach the task:\n"
+            "1. Analyze the image and understand its context.\n"
+            "2. Review the (answer, rationale) pair in connection with the image.\n"
+            "3. Infer the possible questions that would logically result in the given answer and rationale within the context of the image.\n\n"
+            
             "Rules:\n"
-            "1. Ensure that the inferred questions are relevant to both the image and the (answer, rationale) pair."
-            "2. The questions should reflect different possible interpretations that match the given answer and rationale."
-            "3. Keep the questions concise and clear.\n"
-            "Do not hallucinate"
-            "Return the output as a list of the top 3 inferred questions. Nothing else")
+            "1. Ensure that the inferred questions are both relevant to the image and aligned with the (answer, rationale) pair.\n"
+            "2. Keep the questions concise and clear.\n"
+            "Provide a list of exactly 3 most likely questions for the (answer, rationale) pair.\n\n"
+            "Do not hallucinate.\n"
+            "Use a list-like structure as output: \"[\"inferred question 1 text\", \"inferred question 2 text\", \"inferred question 3 text\"]\" .Nothing else.")
 
     def infer_questions(self, image, ar_pairs):
         inferred_questions = []
         for (answer, rationale) in ar_pairs:
-            output = self.generate_using_phi3(image, f'[{answer}, {rationale}]')
-            print(output)
+            if self.model_family == "llama_32":
+                output = self.generate_using_llama32(image, f'[{answer}, {rationale}]')
+                output = ast.literal_eval(output)
+                inferred_questions.append(output)
+            else:
+                pass
+                #output = self.generate_using_phi3(image, f'[{answer}, {rationale}]')
+            #print(output)
         return inferred_questions
 
     def get_most_similar_question_score(self, question, inferred_questions):
-        pass
+        ques_embed = self.embedding_model.encode(question, convert_to_tensor=True)
+        infer_embeds = self.embedding_model.encode(inferred_questions, convert_to_tensor=True)
+
+        # Range: [-1, 1]
+        similarity_scores = util.pytorch_cos_sim(ques_embed, infer_embeds)
+
+        # Range: [0, 1]
+        similarity_scores = (similarity_scores + 1) / 2
+        
+        return round(torch.max(similarity_scores).item(), 5)
 
     # base-64 encoded image
     def verify_inference(self, qars, image):
         questions = [qar["question"] for qar in qars]
         ar_pairs = [(qar["answer"], qar["rationale"]) for qar in qars]
-        if self.model_family == "phi_3_vision":
-            inferred_questions = self.infer_questions(image, ar_pairs)
-            
-            '''
-            inferred_questions = self.infer_questions(image, qar["answer"], qar["rationale"])
-            most_similar_question_score = self.get_most_similar_question_score(question, inferred_questions)
-            qars[i]["br_score"] = most_similar_question_score * qar["score"]
-            '''
-        
+        #inferred_questions = self.infer_questions(image, ar_pairs)
+        #print(inferred_questions)
+        inferred_questions = [["What is the primary characteristic of a rabbit's ears?", "What is a distinctive feature of a rabbit's eyes?", "What is a notable feature of a rabbit's tail?"], ["What is the rabbit's name?", 'What is the location of the scene?', "What is the rabbit's occupation?"], ['What type of clothing does the rabbit in the image wear?', "What is the color of the rabbit's coat?", "What is the rabbit wearing in the image?"]]
+        for i, question in enumerate(questions):
+            most_similar_question_score = self.get_most_similar_question_score(question, inferred_questions[i])
+            qars[i]["br_score"] = most_similar_question_score * qars[i]["score"]
         return qars
