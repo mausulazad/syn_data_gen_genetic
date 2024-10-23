@@ -166,17 +166,20 @@ def setup_backward_reasoning_models(br_models):
     for model_name in br_models:
         if model_name == "llama32":
             model, processor = setup_llama32()
-            br_mllms.append(BackwardReasoner(model, processor, inference_type='backward_reasoning'))
+            br_mllms.append(BackwardReasoner(model, processor, model_family="llama_32", inference_type='backward_reasoning'))
         # TODO: Pr 3 --> add other judge mllms (i.e. llava-critic, blip-3, sfr judge, prometheus)
+        elif model_name == "phi_3_vision":
+            model, processor = setup_phi3_vision()
+            br_mllms.append(BackwardReasoner(model, processor, model_family="phi_3_vision", inference_type='backward_reasoning'))
     return br_mllms
 
 def setup_models(generator_models, judge_model, br_model):
+    # Remove after testing
     generator_mllms = []
+    judge_mllm = None
+    
     #generator_mllms = setup_generator_models(generator_models)
     #judge_mllm = setup_judge_models([judge_model])[0]
-    judge_mllm = setup_judge_models([judge_model])[0]
-    #br_mllm = setup_backward_reasoning_models([br_model])[0]
+    br_mllm = setup_backward_reasoning_models([br_model])[0]
     
-    #return (generator_mllms, judge_mllm, br_mllm)
-    return (generator_mllms, judge_mllm)
-    #return (generator_mllms) 
+    return (generator_mllms, judge_mllm, br_mllm) 
