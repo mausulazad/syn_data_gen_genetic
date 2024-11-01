@@ -9,7 +9,14 @@ import sys
 import warnings
 import os
 
+import hashlib
+
 from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, GenerationConfig
+
+from fuzzywuzzy import fuzz
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
 #from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 
@@ -182,4 +189,36 @@ def setup_models(generator_models, judge_model, br_model):
     #judge_mllm = setup_judge_models([judge_model])[0]
     br_mllm = setup_backward_reasoning_models([br_model])[0]
     
-    return (generator_mllms, judge_mllm, br_mllm) 
+    return (generator_mllms, judge_mllm, br_mllm)
+
+def deduplicate_qars(qars):
+    unique_qars = []
+    seen_qar_hashes = set()
+    # step 1: remove exact copies of qars
+    for qar in qars:
+        key = f'{qar["question"]}, {qar["answer"]}, {qar["rationale"]}'
+        qar_hash = hashlib.md5(key.encode()).hexdigest()
+        if qar_hash not in seen_qar_hashes:
+            unique_qars.append(qar)
+            seen_qar_hashes.add(qar_hash)
+
+    # step 2: remove highly similar qars (1 of them)
+    nonsimilar_qars = []
+    seen_qars = []
+    for qar in unique_qars:
+        qar_1_text = f'{qar["question"]}, {qar["answer"]}, {qar["rationale"]}'
+        qar_is_duplicate = False
+        for seen_qar in seen_qars:
+            qar_2_text = f'{seen_qar["question"]}, {seen_qar["answer"]}, {seen_qar["rationale"]}'
+            vectorizer = TfidfVectorizer()
+            vectors = vectorizer.fit_transform([qar_1_text, qar_2_text]).toarray()
+            cosine_sim = cosine_similarity(vectors)[0, 1]
+            qar_is_duplicate = cosine_sim >= 0.85
+            if qar_is_duplicate:
+                break
+
+        if not qar_is_duplicate:
+            seen_qars.append(qar)
+            nonsimilar_qars.append(qar)
+
+    return nonsimilar_qars
