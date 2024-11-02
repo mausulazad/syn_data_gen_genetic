@@ -1,3 +1,6 @@
+import re
+import json
+
 import ast
 import pprint
 import copy
@@ -250,7 +253,7 @@ class FinalJudge:
         image_tensor = process_images([image], self.processor, self.model.config)
         image_tensor = [_image.to(dtype=torch.float16, device=self.device) for _image in image_tensor]
     
-        for qar in qars:
+        for i, qar in enumerate(qars):
             question = f'{DEFAULT_IMAGE_TOKEN}\nThis is the question to judge: {qar["question"]}'
             conv = copy.deepcopy(conv_templates[self.conv_template])
             conv.append_message(conv.roles[1], self.system_prompt)
@@ -269,12 +272,16 @@ class FinalJudge:
                 max_new_tokens=4096,
             )
 
-            text_outputs = self.tokenizer.batch_decode(cont, skip_special_tokens=True)
-            dsp = {
-                'question': qar["question"],
-                'eval': text_outputs[0]
-            }
+            judgement_text = self.tokenizer.batch_decode(cont, skip_special_tokens=True)
+            judgement_text = self.parse_judgement(judgement_text[0])
+            qars[i]['evaluation'] = judgement_text
 
-            pprint.pprint(dsp)
-            print("x"*30)
+        return qars
+
+    def parse_judgement(self, judgement):
+        json_structure = re.search(r'```json\n({.*?})\n```', judgement, re.DOTALL)
+        if json_structure:
+            json_object = json_structure.group(1)
+            parsed_judgement = json.loads(json_object)
+        return parsed_judgement
             
