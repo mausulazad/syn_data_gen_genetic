@@ -27,7 +27,7 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from llava.conversation import conv_templates, SeparatorStyle
 
 from datasets import load_dataset
-from models import MLLM, Judge, BackwardReasoner
+from models import MLLM, Judge, BackwardReasoner, FinalJudge
 
 def load_and_preprocess_dataset(dataset_name):
     if dataset_name == "aokvqa":
@@ -74,26 +74,24 @@ def setup_generator_models(generator_models):
             generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type='generate'))
     return generator_mllms
 
+'''
 def setup_llava_critic():
-    '''
-    # Install 'llava' library' prior to loading LLaVa-Critci: pip install git+https://github.com/LLaVA-VL/LLaVA-NeXT.git
+    warnings.filterwarnings("ignore")
     model_id = "lmms-lab/llava-critic-7b"
     model_name = "llava_qwen"
     device = "cuda"
     device_map = "auto"
-    '''
+    tokenizer, model, image_processor, max_length = load_pretrained_model(
+        model_id, 
+        None, 
+        model_name, 
+        device_map=device_map
+    ) 
 
-    warnings.filterwarnings("ignore")
-    pretrained = "lmms-lab/llava-onevision-qwen2-7b-ov"
-    model_name = "llava_qwen"
-    device = "cuda"
-    device_map = "cuda"
-    tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map) 
-
-    url = "https://github.com/haotian-liu/LLaVA/blob/1a91fc274d7c35a9b50b3cb29c4247ae5837ce39/images/llava_v1_5_radar.jpg?raw=true"
-    image = Image.open(requests.get(url, stream=True).raw)
-    image_tensor = process_images([image], image_processor, model.config)
-    image_tensor = [_image.to(dtype=torch.float16, device=device) for _image in image_tensor]
+    #url = "https://github.com/haotian-liu/LLaVA/blob/1a91fc274d7c35a9b50b3cb29c4247ae5837ce39/images/llava_v1_5_radar.jpg?raw=true"
+    #mage = Image.open(requests.get(url, stream=True).raw)
+    #image_tensor = process_images([image], image_processor, model.config)
+    #image_tensor = [_image.to(dtype=torch.float16, device=device) for _image in image_tensor]
 
     conv_template = "qwen_1_5"
     question = DEFAULT_IMAGE_TOKEN + "\nWhat is shown in this image?"
@@ -116,14 +114,13 @@ def setup_llava_critic():
     text_outputs = tokenizer.batch_decode(cont, skip_special_tokens=True)
     print(text_outputs)
     
-    '''
     tokenizer, model, image_processor, max_length = load_pretrained_model(
         model_id, 
         None, 
         model_name, 
         device_map="auto"
     )
-    '''
+'''
 
 def setup_phi3_vision():
     model_id = "microsoft/Phi-3.5-vision-instruct" 
@@ -222,3 +219,14 @@ def deduplicate_qars(qars):
             nonsimilar_qars.append(qar)
 
     return nonsimilar_qars
+
+def setup_final_judge():
+    warnings.filterwarnings("ignore")
+    pretrained = "lmms-lab/llava-onevision-qwen2-7b-ov"
+    model_name = "llava_qwen"
+    device = "cuda"
+    device_map = "auto"
+    tokenizer, model, processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
+    final_judge = FinalJudge(model, processor, tokenizer, max_length)
+    return final_judge
+

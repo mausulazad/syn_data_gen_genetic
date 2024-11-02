@@ -1,11 +1,16 @@
 import ast
 import pprint
+import copy
 
 import torch
 from transformers import GenerationConfig
 
 from sentence_transformers import SentenceTransformer, util
 
+from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
+
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
+from llava.conversation import conv_templates, SeparatorStyle
 
 class MLLM:
     def __init__(self, model, processor, model_family, inference_type):
@@ -206,3 +211,70 @@ class BackwardReasoner(MLLM):
             most_similar_question_score = self.get_most_similar_question_score(question, inferred_questions[i])
             qars[i]["br_score"] = most_similar_question_score * qars[i]["score"]
         return qars
+
+class FinalJudge:
+    def __init__(self, model, processor, tokenizer, max_length):
+        self.model = model
+        self.processor = processor
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+        self.device = "cuda"
+        self.device_map = "auto"
+        self.conv_template = "qwen_1_5"
+        self.system_prompt = ("You will be given a question related to the image.\n"
+            "Evaluate the quality of the question for challenging advanced reasoning systems like ChatGPT or GPT-4 on following criteria:\n"
+            "- Add 20 points if the question requires commonsense knowledge about human social behavior to answer, otherwise add 0.\n"
+            "- Add 20 points if the question requires knowledge of the physical world to answer, otherwise add 0.\n"
+            "- Add 20 point if visual understanding is necessary to answer the question, otherwise add 0.\n"
+            "- Add 20 point if the question challenges the system's reasoning capabilities, otherwise add 0.\n"
+            "- Add 20 point if the question is sufficiently complex to require in-depth reasoning, otherwise add 0.\n\n"
+            "Sum up the score (do not hallucinate, do proper arithmetic operation, can be at max 100). After scoring out of 100, examine the question and identify the cases it failed to meet:\n"
+            "- First, Justify your total score, up to 100 words.\n"
+            "- Next, briefly discuss the criterion the question failed to meet in under 100 words.\n"
+            "- Now propose a question evolving method which would address the shortcoming and overall improve the question.\n\n"
+            
+            "DO NOT, I REPEAT, DO NOT ANSWER THE QUESTION. YOU MUST JUDGE IT, BASED ON GIVEN CRITERION."
+            "Finally, return the score, justification, failures, evolution method as a JSON STRUCTURE. I NEED TO PARSE IT LATER," 
+            "SO DONT ADD ANYTHING ELSE AFTER OR BEFORE THE JSON OBJECT, OTHERWISE IT WILL BREAK MY CODE AND I WILL BE VERY SAD.\n"
+            "- Please do NOT add new lines or tabs in the JSON.\n"
+            "- Always return a valid parse-able JSON STRUCTURE. YOU ALWAYS FORGET THAT. THIS WILL CAUSE A FIRE ON A PRODUCTION SERVER BEING USED BY MILLIONS.\n"
+            "The JSON structure will have following key-value items:\n"
+            "1. score: <Total score out of 100>\n"
+            "2. justification: <Justification of given score>\n"
+            "3. failures: <Brief desciption of given criterion that are not present in question>\n"
+            "4. evolution_method: <A question evolving method that can be used to generate an evolved question that meets all/most criterion>\n")
+
+    
+    # base-64 encoded image
+    def evaluate(self, qars, image):
+        image_tensor = process_images([image], self.processor, self.model.config)
+        image_tensor = [_image.to(dtype=torch.float16, device=self.device) for _image in image_tensor]
+    
+        for qar in qars:
+            question = f'{DEFAULT_IMAGE_TOKEN}\nThis is the question to judge: {qar["question"]}'
+            conv = copy.deepcopy(conv_templates[self.conv_template])
+            conv.append_message(conv.roles[1], self.system_prompt)
+            conv.append_message(conv.roles[0], question)
+            judge_prompt = conv.get_prompt()
+
+            input_ids = tokenizer_image_token(judge_prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(self.device)
+            image_sizes = [image.size]
+
+            cont = self.model.generate(
+                input_ids,
+                images=image_tensor,
+                image_sizes=image_sizes,
+                do_sample=False,
+                temperature=0.3,
+                max_new_tokens=4096,
+            )
+
+            text_outputs = self.tokenizer.batch_decode(cont, skip_special_tokens=True)
+            dsp = {
+                'question': qar["question"],
+                'eval': text_outputs[0]
+            }
+
+            pprint.pprint(dsp)
+            print("x"*30)
+            

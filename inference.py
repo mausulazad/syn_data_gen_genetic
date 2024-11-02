@@ -9,7 +9,7 @@ import sys
 import warnings
 import os
 
-from utils import load_and_preprocess_dataset, setup_models, deduplicate_qars
+from utils import load_and_preprocess_dataset, setup_models, deduplicate_qars, setup_final_judge
 
 def judge_qars(qars, image, judge_mllm):
     qars = judge_mllm.evaluate(qars, image)
@@ -27,9 +27,11 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     image = Image.open(requests.get(url, stream=True).raw)
 
     # Step 1: Load models
-    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
-    #TODO:  final_judge_mllm = setup_final_judge()
+    #generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
 
+    final_judge_mllm = setup_final_judge()
+
+    '''
     # Step 2: Generate qars
     # query = "Can you describe the activity of the animal in context of the image?"
     #query = "Can you generate 3 non-trivial, diverse questions and corresponding answers based on the image without hallucinating? Keep the answers precise and short (no over explanation).Return the question-answer pairs in a list following this structure: [{'question': <question>, 'answer': <answer>}]. Return only the list of JSON objects, nothing else."
@@ -79,6 +81,36 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
                 syn_qar_bucket.append(all_syn_qars[mllm][qar])
 
     # step 6: de-duplicate initially filtered qars
-    unique_qars = deduplicate_qars(syn_qar_bucket)
+    #unique_qars = deduplicate_qars(syn_qar_bucket)
+    '''
+
+    unique_qars = [
+        {
+            'question': 'What is the animal depicted in the image?', 
+            'answer': 'A rabbit', 
+            'rationale': 'The animal has long ears, large eyes, and a fluffy tail, which are characteristic features of a rabbit.', 
+            'score': 90, 
+            'feedback': "The image shows a rabbit standing on a dirt path with a house in the background. The rabbit is dressed in a blue coat and brown pants, which is not typical for a rabbit in the wild. The answer 'A rabbit' is correct because the animal's physical characteristics match those of a rabbit.", 
+            'br_score': 65.5821
+        }, 
+        {
+            'question': 'Where is the rabbit standing?', 
+            'answer': 'On a dirt path', 
+            'rationale': 'The rabbit is standing on a dirt path that runs through a grassy field, with flowers and trees on either side.', 
+            'score': 90, 
+            'feedback': 'The rabbit is standing on a dirt path that is surrounded by a lush green field with flowers and trees on either side. The path appears to be a rural road, leading towards a stone building in the distance. The rabbit is dressed in a blue coat and brown pants, which adds a touch of human-like formality to the scene. The overall setting suggests a peaceful countryside environment.', 
+            'br_score': 78.8562
+        }, 
+        {
+            'question': 'What is the rabbit wearing?', 
+            'answer': 'A blue coat', 
+            'rationale': 'The rabbit is wearing a blue coat with a brown vest and tan pants, which suggests a formal or semi-formal outfit.', 
+            'score': 90, 
+            'feedback': "The rabbit is dressed in a blue coat with a brown vest and tan pants, which is a formal or semi-formal outfit. The coat has buttons and a collar, and the rabbit is also wearing a bow tie, which adds to the formal appearance. The outfit is well-fitted and the rabbit is standing upright, which indicates that the clothing is designed to be worn by a human, not a rabbit. The colors are vibrant and the rabbit's attire is the focal point of the image, making it easy to identify.", 
+            'br_score': 88.14959999999999
+        }
+    ]
+
+    final_judge_mllm.evaluate(unique_qars, image)
 
      
