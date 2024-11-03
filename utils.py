@@ -51,7 +51,7 @@ def setup_molmo():
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         trust_remote_code=True,
-        torch_dtype='auto',
+        torch_dtype=torch.bfloat16,
         device_map='auto'
     )
     processor = AutoProcessor.from_pretrained(
@@ -72,6 +72,7 @@ def setup_generator_models(generator_models):
             # NOT WORKING: Bug fix is needed
             model, processor = setup_molmo()
             generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type='generate'))
+            
     return generator_mllms
 
 '''
@@ -138,18 +139,7 @@ def setup_phi3_vision():
         trust_remote_code=True, 
         num_crops=16
     )
-
     return (model, processor)
-
-    '''
-    
-
-    
-
-    
-    
-    score, feedback = ast.literal_eval(response)
-    '''
     
 def setup_judge_models(judge_models):
     judge_mllms = []
@@ -181,10 +171,11 @@ def setup_models(generator_models, judge_model, br_model):
     # Remove after testing
     generator_mllms = []
     judge_mllm = None
+    br_mllm = None
     
-    #generator_mllms = setup_generator_models(generator_models)
+    generator_mllms = setup_generator_models(generator_models)
     #judge_mllm = setup_judge_models([judge_model])[0]
-    br_mllm = setup_backward_reasoning_models([br_model])[0]
+    #br_mllm = setup_backward_reasoning_models([br_model])[0]
     
     return (generator_mllms, judge_mllm, br_mllm)
 
@@ -229,6 +220,16 @@ def setup_final_judge():
     tokenizer, model, processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
     final_judge = FinalJudge(model, processor, tokenizer, max_length)
     return final_judge
+
+def get_gpu_details():
+    gpu_count = torch.cuda.device_count()
+    print(f'No. of GPUs: {gpu_count}')
+    for i in range(gpu_count):
+        print(f"Device cuda:{i} - {torch.cuda.get_device_name(i)}")
+
+# TODO
+def estimate_model_ram_usage():
+    pass
 
 
 

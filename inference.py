@@ -1,5 +1,6 @@
 import requests
 import json
+import random
 import copy
 import pprint
 import torch
@@ -9,7 +10,7 @@ import sys
 import warnings
 import os
 
-from utils import load_and_preprocess_dataset, setup_models, deduplicate_qars, setup_final_judge
+from utils import load_and_preprocess_dataset, setup_models, deduplicate_qars, setup_final_judge, get_gpu_details
 
 def judge_qars(qars, image, judge_mllm):
     qars = judge_mllm.evaluate(qars, image)
@@ -23,45 +24,54 @@ def verify_inference(qars, image, br_mllm):
 def generate_qars(dataset, generator_models, judge_model, br_model):
     synthetic_qars = []
     # TODO: load aokvqa/scienceqa dataset
-    # step 0: load and preprocess dataset
-    #data = load_and_preprocess_dataset(dataset)
+    # Step 0: Load and preprocess dataset
+    data = load_and_preprocess_dataset(dataset)
+    random_i = random.randint(0, len(data)-1)
+    #image = data[random_i]["image"]
+    image = data[9344]["image"]
+
+    print(random_i)
     
     # Step 1: Load models
     # TODO: Add more generator mllms (i.e. molmo)
-    #generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
-    final_judge_mllm = setup_final_judge()
+    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    #final_judge_mllm = setup_final_judge()
     
     # Remove after testing
-    url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/0052a70beed5bf71b92610a43a52df6d286cd5f3/diffusers/rabbit.jpg"
-    image = Image.open(requests.get(url, stream=True).raw)
+    #url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/0052a70beed5bf71b92610a43a52df6d286cd5f3/diffusers/rabbit.jpg"
+    #image = Image.open(requests.get(url, stream=True).raw)
     
     evolvable_questions = []
     tries = 0
     # LATER: Make 3 tries
-    while tries < 2:
+    while tries < 1:
         # HEREEE: Check how mllms (existing ones perform in evolving task) 
-        '''
         # Step 2: Generate qars
-        # query = "Can you describe the activity of the animal in context of the image?"
+        #query = "Can you describe the activity of the animal in context of the image?"
         #query = "Can you generate 3 non-trivial, diverse questions and corresponding answers based on the image without hallucinating? Keep the answers precise and short (no over explanation).Return the question-answer pairs in a list following this structure: [{'question': <question>, 'answer': <answer>}]. Return only the list of JSON objects, nothing else."
         
-        # Initial qar generation prompt
-        if len(evolvable_questions) == 0:
-            query_1 = "Can you generate 3 non-trivial, diverse questions based on the image without hallucinating?  Each question can not have sub-questions. Return the questions in a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
-            query_2 = 'You will be given an image and 3 questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
-        # Evolved qar generation prompt
-        else:
-            query_1 = "You will be given a list of questions (that you have generated) along with corresponding evolution instruction. Based on corresponding evolution instruction evolve each question and return all evolved questions in a list (comma separated) like this: [<evolved question 1>, <evolved question 2>, ....]. Return only the list of evolved questions, nothing else." 
-            query_2 = "You will be given an image and some questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the questions, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
+        use_evol_prompt = False
+        if len(evolvable_questions) != 0:
+            use_evol_prompt = True
+
         all_syn_qars = {}
+        # TODO: Test with >1 mllm (i.e. llama 3.2, llava, molmo)
         for i, mllm in enumerate(generator_mllms):
-            questions = mllm.generate(image, query_1, questions=None)
-            syn_qars = mllm.generate(image, query_2, questions)
-            syn_qars = json.loads(syn_qars)
+            questions = mllm.generate(image, use_evol_prompt, questions=None, evolvable_questions=evolvable_questions)
+            syn_qars = mllm.generate(image, use_evol_prompt=False, questions=questions, evolvable_questions=[])
+            try:
+                syn_qars = json.loads(syn_qars)
+            except json.JSONDecodeError:
+                print(f'Error: Could not parse syn_qars for {random_i}-th training image, moving to next mllm.')
+                continue
+            pprint.pprint(syn_qars)
+            '''
             all_syn_qars[f'mllm_{i+1}'] = {}
             for j, qar in enumerate(syn_qars):
                 all_syn_qars[f'mllm_{i+1}'][f'qar_{j+1}'] = qar
+            '''
 
+        '''
         # Step 3: Judge (soft filter) qars generated by each generator mllm
         for mllm in all_syn_qars:
             judged_qars = []
@@ -127,11 +137,12 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
             }
         ]
 
+        '''
         evolvable_questions = []
         unique_qars = final_judge_mllm.evaluate(unique_qars, image)
         for unique_qar in unique_qars:
             # Current qar can be stored in final dataset
-            if unique_qar["evaluation"]["score"] > 90:
+            if unique_qar["evaluation"]["score"] >= 80:
                 # TODO: Generate options (use phi3-mini like Moshiur did)
                 synthetic_qars.append({
                     "question": unique_qar["question"],
@@ -139,9 +150,11 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
                     "rationale": unique_qar["rationale"]
                 })
 
+            # This additional check is done, since the score is not always reliable (arithmetic mistakes may occur by MLLM)
             # Check if current qar can be further evolved
+            failures = unique_qars["evaluation]["failures"]
             evol_text = unique_qar["evaluation"]["evolution_method"]
-            if  evol_text and ((evol_text != 'None') or (evol_text is not None)):
+            if  evol_text and (('None' not in failures) or (evol_text != 'None') or (evol_text is not None)):
                 evolvable_questions.append({
                     "question": unique_qar["question"],
                     "evolution_inst": unique_qar["evaluation"]["evolution_method"]
@@ -150,6 +163,9 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
         # All qars are evolved as much as possible
         if len(evolvable_questions) == 0:
             break
+
+        pprint.pprint(evolvable_questions)
+        '''
         
         tries += 1
 
