@@ -1,11 +1,19 @@
+import re
+import json
+
 import ast
 import pprint
+import copy
 
 import torch
 from transformers import GenerationConfig
 
 from sentence_transformers import SentenceTransformer, util
 
+from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
+
+from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
+from llava.conversation import conv_templates, SeparatorStyle
 
 class MLLM:
     def __init__(self, model, processor, model_family, inference_type):
@@ -26,23 +34,57 @@ class MLLM:
             prompt = "You are an helpful assistant. Given an answer and image, you try to infer the corresponding question."
         return prompt
 
-    def generate_using_llama32(self, image, query, questions=None):
+    def generate_using_llama32(self, image, use_evol_prompt, questions, evolvable_questions):
+        # Generating questions
         if questions is None:
-            messages = [
-                {
-                    "role": "assistant",
-                    "content": self.system_prompt
-                },
-                {
-                    "role": "user", 
-                    "content": [
-                        {"type": "image"},
-                        {"type": "text", "text": query}
-                    ]
-                },
-            ]
+            # Evolving generated questions
+            if use_evol_prompt:
+                input_str = ''
+                for evolvable_question in evolvable_questions:
+                    input_str += f'Original Question: {evolvable_question["question"]} Evolution Strategy: {evolvable_question["evolution_inst"]}\n'
+                
+                # use evol method along with past questions for evolution (use evolvable_questions)
+                query = ("Given the following list of original questions and their corresponding evolution strategies, improve each original " 
+                   "question by following its specific evolution strategy. Ensure that each evolved question requires commonsense knowledge, " 
+                   "understanding of the physical world, reasoning capabilities, and/or in-depth complexity, and that it can still be answered " 
+                   "in one to five words. Each evolved question should not have sub-questions and must retain relevance to the context of the image "
+                   "and must NOT copy-paste or use the example questions from the evolution strategies directly.\n\n" 
+                   "Inputs:\n"
+                   f"{input_str}\n"
+                   "Return the evolved questions as a list, comma separated and in one line, like this: [<evolved_question_1>, <evolved_question_2>, <evolved_question_3>], nothing else.")
 
+                messages = [
+                    {
+                        "role": "assistant",
+                        "content": self.system_prompt
+                    },
+                    {
+                        "role": "user", 
+                        "content": [
+                            {"type": "image"},
+                            {"type": "text", "text": query}
+                        ]
+                    },
+                ]         
+            # 1st time generating questions
+            else:
+                query = "Generate 3 non-trivial, diverse questions (add '?' after each question) based on the image without hallucinating that can be answered using one to at max. five words. Each question can not have sub-questions. Return the questions in a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
+                messages = [
+                    {
+                        "role": "assistant",
+                        "content": self.system_prompt
+                    },
+                    {
+                        "role": "user", 
+                        "content": [
+                            {"type": "image"},
+                            {"type": "text", "text": query}
+                        ]
+                    },
+                ]
+        # Generating answers and rationales
         else:
+            query = 'You will be given an image and questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
             messages = [
                 {
                     "role": "assistant",
@@ -60,18 +102,7 @@ class MLLM:
                     ]
                 },
             ]
-
-        '''
-        {
-            "role": "assistant",
-            "content": "[{'question': 'What is the animal depicted in the image?', 'answer': 'A rabbit'}, {'question': 'Where is the rabbit standing?', 'answer': 'On a dirt path'}, {'question': 'What is the rabbit wearing?', 'answer': 'A blue coat'}]"
-        },
-        {
-            "role": "user",
-            "content": "Can you generate corresponding rationales for each question-answer pair, that justify briefly why the answer is correct based on the image?"
-        }
-        '''
-
+        
         input_text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
         inputs = self.processor(
             image,
@@ -86,8 +117,10 @@ class MLLM:
         # llama-32 specific
         output = output.split('<|eot_id|>')[0]
         return output
+        
 
     def generate_using_phi3(self, image, query, questions=None):
+        # TODO: Build query
         placeholder = ""
         placeholder += f"<|image_1|>\n"
 
@@ -122,13 +155,50 @@ class MLLM:
             generate_ids, 
             skip_special_tokens=True,
             clean_up_tokenization_spaces=False)[0] 
-        return output  
-            
+        return output
+
+    def generate_using_molmo(self, image, use_evol_prompt, questions, evolvable_questions):
+        if questions is None:
+            # TODO: For tries > 0
+            if use_evol_prompt:
+                pass
+            else:
+                query = "Can you generate 3 non-trivial, diverse questions based on the image without hallucinating that can be answered using one to at max. five words?  Each question can not have sub-questions. Return the questions in a list (MUST BE comma separated, YOU FORGET THIS, DON'T) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
+        else:
+            query = 'You will be given an image and questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else. REMEMBER, YOU HAVE TO DO THIS FOR EACH GIVEN QUESTION, NOT JUST FIRST ONE.'
+        
+        prompt = None
+        if questions is None:
+            prompt = f'{self.system_prompt}\n\n{query}'
+        else:
+            prompt = f'{self.system_prompt}\n\n{questions}\n\n{query}'
+
+        pprint.pprint(prompt)
+        inputs = self.processor.process(
+            images=[image],
+            text=prompt
+        )
+
+        inputs["images"] = inputs["images"].to(torch.bfloat16)
+        inputs = {k: v.to(self.model.device).unsqueeze(0) for k, v in inputs.items()}
+
+        output = self.model.generate_from_batch(
+            inputs,
+            GenerationConfig(max_new_tokens=300, temperature=0.3, stop_strings="<|endoftext|>"),
+            tokenizer=self.processor.tokenizer
+        )
+
+        generated_tokens = output[0,inputs['input_ids'].size(1):]
+        output = self.processor.tokenizer.decode(generated_tokens, skip_special_tokens=True)
+        print(output)
+
     # base-64 encoded image
-    def generate(self, image, query, questions=None):
+    def generate(self, image, use_evol_prompt=False, questions=None, evolvable_questions=[]):
         output = None
         if self.model_family == "llama_32":
-            output = self.generate_using_llama32(image, query, questions)
+            output = self.generate_using_llama32(image, use_evol_prompt, questions, evolvable_questions)
+        elif self.model_family == "molmo":
+            output = self.generate_using_molmo(image, use_evol_prompt, questions, evolvable_questions)
         return output
 
 
@@ -174,7 +244,7 @@ class BackwardReasoner(MLLM):
         inferred_questions = []
         for (answer, rationale) in ar_pairs:
             if self.model_family == "llama_32":
-                output = self.generate_using_llama32(image, f'[{answer}, {rationale}]')
+                output = self.generate_using_llama32(image, use_evol_prompt=False, questions=f'[{answer}, {rationale}]')
                 output = ast.literal_eval(output)
                 inferred_questions.append(output)
             else:
@@ -206,3 +276,74 @@ class BackwardReasoner(MLLM):
             most_similar_question_score = self.get_most_similar_question_score(question, inferred_questions[i])
             qars[i]["br_score"] = most_similar_question_score * qars[i]["score"]
         return qars
+
+class FinalJudge:
+    def __init__(self, model, processor, tokenizer, max_length):
+        self.model = model
+        self.processor = processor
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+        self.device = "cuda"
+        self.device_map = "auto"
+        self.conv_template = "qwen_1_5"
+        self.system_prompt = ("You will be given a question related to the image.\n"
+            "Evaluate the quality of the question for challenging advanced reasoning systems like ChatGPT or GPT-4 on following criteria:\n"
+            "- Add 20 points if the question requires commonsense knowledge about human social behavior to answer, otherwise add 0.\n"
+            "- Add 20 points if the question requires knowledge of the physical world to answer, otherwise add 0.\n"
+            "- Add 20 point if visual understanding is necessary to answer the question, otherwise add 0.\n"
+            "- Add 20 point if the question challenges the system's reasoning capabilities, otherwise add 0.\n"
+            "- Add 20 point if the question is sufficiently complex to require in-depth reasoning, otherwise add 0.\n\n"
+            "Sum up the score (do not hallucinate, do proper arithmetic operation, can be at max 100). After scoring out of 100, examine the question and identify the cases it failed to meet:\n"
+            "- First, Justify your total score, up to 100 words.\n"
+            "- Next, briefly discuss the criterion the question failed to meet in under 100 words.\n"
+            "- Now propose a question evolving method which would address the shortcoming and overall improve the question, WITHOUT directly providing example questions.\n\n"
+            
+            "DO NOT, I REPEAT, DO NOT ANSWER THE QUESTION. YOU MUST JUDGE IT, BASED ON GIVEN CRITERION."
+            "Finally, return the score, justification, failures, evolution method as a JSON STRUCTURE. I NEED TO PARSE IT LATER," 
+            "SO DONT ADD ANYTHING ELSE AFTER OR BEFORE THE JSON OBJECT, OTHERWISE IT WILL BREAK MY CODE AND I WILL BE VERY SAD.\n"
+            "- Please do NOT add new lines or tabs in the JSON.\n"
+            "- Always return a valid parse-able JSON STRUCTURE. YOU ALWAYS FORGET THAT. THIS WILL CAUSE A FIRE ON A PRODUCTION SERVER BEING USED BY MILLIONS.\n"
+            "The JSON structure will have following key-value items:\n"
+            "1. score: <Total score out of 100>\n"
+            "2. justification: <Justification of given score>\n"
+            "3. failures: <Brief desciption of given criterion that are not present in question>\n"
+            "4. evolution_method: <A question evolving method that can be used to generate an evolved question that meets all/most criterion>\n")
+
+    
+    # base-64 encoded image
+    def evaluate(self, qars, image):
+        image_tensor = process_images([image], self.processor, self.model.config)
+        image_tensor = [_image.to(dtype=torch.float16, device=self.device) for _image in image_tensor]
+    
+        for i, qar in enumerate(qars):
+            question = f'{DEFAULT_IMAGE_TOKEN}\nThis is the question to judge: {qar["question"]}'
+            conv = copy.deepcopy(conv_templates[self.conv_template])
+            conv.append_message(conv.roles[1], self.system_prompt)
+            conv.append_message(conv.roles[0], question)
+            judge_prompt = conv.get_prompt()
+
+            input_ids = tokenizer_image_token(judge_prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(self.device)
+            image_sizes = [image.size]
+
+            cont = self.model.generate(
+                input_ids,
+                images=image_tensor,
+                image_sizes=image_sizes,
+                do_sample=False,
+                temperature=0.3,
+                max_new_tokens=4096,
+            )
+
+            judgement_text = self.tokenizer.batch_decode(cont, skip_special_tokens=True)
+            judgement_text = self.parse_judgement(judgement_text[0])
+            qars[i]['evaluation'] = judgement_text
+
+        return qars
+
+    def parse_judgement(self, judgement):
+        json_structure = re.search(r'```json\n({.*?})\n```', judgement, re.DOTALL)
+        if json_structure:
+            json_object = json_structure.group(1)
+            parsed_judgement = json.loads(json_object)
+        return parsed_judgement
+            
