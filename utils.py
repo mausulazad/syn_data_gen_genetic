@@ -11,7 +11,7 @@ import os
 
 import hashlib
 
-from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, GenerationConfig
+from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, LlavaForConditionalGeneration, GenerationConfig
 
 from fuzzywuzzy import fuzz
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -62,17 +62,39 @@ def setup_molmo():
     )
     return (model, processor)
 
+def setup_llava():
+    # TODO: Later, upgrade to 1.6
+    model_id = "llava-hf/llava-1.5-7b-hf"
+
+    model = LlavaForConditionalGeneration.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype=torch.bfloat16,
+        device_map="auto"
+    )
+
+    processor = AutoProcessor.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype='auto',
+        device_map='auto'
+    )
+
+    return (model, processor)
+
 def setup_generator_models(generator_models):
     generator_mllms = []
     for model_name in generator_models:
         if model_name == "llama32":
             model, processor = setup_llama32()
-            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type='generate'))
+            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))
         elif model_name == "molmo":
             # NOT WORKING: Bug fix is needed
             model, processor = setup_molmo()
-            generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type='generate'))
-            
+            generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type="generate"))
+        elif model_name == "llava":
+            model, processor = setup_llava()
+            generator_mllms.append(MLLM(model, processor, model_family="llava", inference_type="generate"))    
     return generator_mllms
 
 '''

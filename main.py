@@ -6,7 +6,7 @@ def main():
     parser = argparse.ArgumentParser(description="A simple argparse example")
 
     parser.add_argument('--dataset', type=str, required=True, help='Seed Dataset')
-    parser.add_argument('--generator_models', type=str, nargs=1, required=True, help='Model(s) for generating synthetic qars')
+    parser.add_argument('--generator_models', type=str, nargs=2, required=True, help='Model(s) for generating synthetic qars')
     parser.add_argument('--judge_model', type=str, required=True, help="Model for judging qar quality")
     parser.add_argument('--br_model', type=str, required=True, help="Model for backward reasoning")
 

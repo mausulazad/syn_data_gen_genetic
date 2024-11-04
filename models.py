@@ -15,6 +15,8 @@ from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_i
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
 from llava.conversation import conv_templates, SeparatorStyle
 
+from transformers import pipeline
+
 class MLLM:
     def __init__(self, model, processor, model_family, inference_type):
         self.model = model
@@ -117,7 +119,36 @@ class MLLM:
         # llama-32 specific
         output = output.split('<|eot_id|>')[0]
         return output
+
+    def generate_using_llava(self, image, use_evol_prompt, questions, evolvable_questions):
+        if questions is None:
+            if use_evol_prompt:
+                pass
+            else:
+
+                query = "Generate 3 non-trivial, diverse questions (add '?' after each question) based on the image without hallucinating that can be answered using one to at max. five words. DO NOT ANSWER, JUST GENERATE QUESTIONS. Each question can not have sub-questions. Return all questions inside a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions (generate 3 questions, NOT LESS THAN THAT. AND MUST RETURN THEM INSIDE A LIST.), nothing else."
+                messages = [
+                    f"ASSISTANT: {self.system_prompt}\nUSER: <image>\n{query}\nASSISTANT:"
+                ]
+        else:
+            #query = 'You will be given an image and questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct, give proper reasoning) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. YOU MUST RETURN ALL NON-DUPLICATE JSON OBJECTS INSIDE A LIST.Return only the list of JSON objects, nothing else.'
+            query = 'Given an image and questions based on the image, generate a correct answer and a corresponding brief but insightful rationale for each question. The rationale should justify why the answer is correct by referencing specific details in the image or using logical inference when appropriate. Avoid vague statements; each rationale should clarify how the visible elements or context in the image supports the answer. Ensure answers are precise and concise (1-2 words if possible), and the rationale directly connects to the answer without over-explanation. Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. YOU MUST RETURN ALL NON-DUPLICATE JSON OBJECTS INSIDE A LIST.Return only the list of JSON objects, nothing else.'
+            messages = [
+                f"ASSISTANT: {self.system_prompt}\nUSER: <image>\nHere are the questions: {questions}\n{query}\nASSISTANT:"
+            ]
         
+        inputs = self.processor(
+            image,
+            messages,
+            add_special_tokens=False,
+            return_tensors="pt"
+        ).to(self.model.device)
+        
+        #inputs = self.processor(messages, images=[image], padding=True, return_tensors="pt").to(self.model.device)
+        output = self.model.generate(**inputs, max_new_tokens=300)
+        output = self.processor.batch_decode(output, skip_special_tokens=True)[0]
+        output = output.split("\nASSISTANT: ")[1]
+        return output
 
     def generate_using_phi3(self, image, query, questions=None):
         # TODO: Build query
@@ -190,7 +221,7 @@ class MLLM:
 
         generated_tokens = output[0,inputs['input_ids'].size(1):]
         output = self.processor.tokenizer.decode(generated_tokens, skip_special_tokens=True)
-        print(output)
+        return output
 
     # base-64 encoded image
     def generate(self, image, use_evol_prompt=False, questions=None, evolvable_questions=[]):
@@ -199,6 +230,8 @@ class MLLM:
             output = self.generate_using_llama32(image, use_evol_prompt, questions, evolvable_questions)
         elif self.model_family == "molmo":
             output = self.generate_using_molmo(image, use_evol_prompt, questions, evolvable_questions)
+        elif self.model_family == "llava":
+            output = self.generate_using_llava(image, use_evol_prompt, questions, evolvable_questions)
         return output
 
 
