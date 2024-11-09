@@ -21,7 +21,8 @@ class MLLM:
     def __init__(self, model, processor, model_family, inference_type):
         self.model = model
         self.processor = processor
-        self.model_family = model_family 
+        self.model_family = model_family
+        self.inference_type = inference_type 
         self.system_prompt = self.get_system_prompt(inference_type)
     
     def get_system_prompt(self, inference_type):
@@ -37,45 +38,30 @@ class MLLM:
         return prompt
 
     def generate_using_llama32(self, image, use_evol_prompt, questions, evolvable_questions):
-        # Generating questions
-        if questions is None:
-            # Evolving generated questions
-            if use_evol_prompt:
-                input_str = ''
-                for evolvable_question in evolvable_questions:
-                    input_str += f'Original Question: {evolvable_question["question"]} Evolution Strategy: {evolvable_question["evolution_inst"]}\n'
+        if self.inference_type == "generate":
+            # Generating questions
+            if questions is None:
+                # Evolving generated questions
+                if use_evol_prompt:
+                    input_str = ''
+                    for evolvable_question in evolvable_questions:
+                        input_str += f'Original Question: {evolvable_question["question"]} Evolution Strategy: {evolvable_question["evolution_inst"]}\n'
                 
-                # use evol method along with past questions for evolution (use evolvable_questions)
-                query = ("Given the following list of original questions and their corresponding evolution strategies, improve each original " 
-                   "question by following its specific evolution strategy. Ensure that each evolved question requires commonsense knowledge, " 
-                   "understanding of the physical world, reasoning capabilities, and/or in-depth complexity, and that it can still be answered " 
-                   "in one to five words. Each evolved question should not have sub-questions and must retain relevance to the context of the image "
-                   "and must NOT copy-paste or use the example questions from the evolution strategies directly.\n\n" 
-                   "Inputs:\n"
-                   f"{input_str}\n"
-                   "Return the evolved questions as a list, comma separated and in one line, like this: [<evolved_question_1>, <evolved_question_2>, <evolved_question_3>], nothing else.")
-
+                    # use evol method along with past questions for evolution (use evolvable_questions)
+                    query = ("Given the following list of original questions and their corresponding evolution strategies, improve each original " 
+                        "question by following its specific evolution strategy. Ensure that each evolved question requires commonsense knowledge, " 
+                        "understanding of the physical world, reasoning capabilities, and/or in-depth complexity, and that it can still be answered " 
+                        "in one to five words. Each evolved question should not have sub-questions and must retain relevance to the context of the image "
+                        "and must NOT copy-paste or use the example questions from the evolution strategies directly.\n\n" 
+                        "Inputs:\n"
+                        f"{input_str}\n"
+                        "Return the evolved questions as a list, comma separated and in one line, like this: [<evolved_question_1>, <evolved_question_2>, <evolved_question_3>], nothing else.")         
+                # 1st time generating questions
+                else:
+                    query = "Generate 3 non-trivial, diverse questions (add '?' after each question) based on the image without hallucinating that can be answered using one to at max. five words. Each question can not have sub-questions. Return the questions in a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
+                
                 messages = [
-                    {
-                        "role": "assistant",
-                        "content": self.system_prompt
-                    },
-                    {
-                        "role": "user", 
-                        "content": [
-                            {"type": "image"},
-                            {"type": "text", "text": query}
-                        ]
-                    },
-                ]         
-            # 1st time generating questions
-            else:
-                query = "Generate 3 non-trivial, diverse questions (add '?' after each question) based on the image without hallucinating that can be answered using one to at max. five words. Each question can not have sub-questions. Return the questions in a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
-                messages = [
-                    {
-                        "role": "assistant",
-                        "content": self.system_prompt
-                    },
+                    { "role": "assistant", "content": self.system_prompt },
                     {
                         "role": "user", 
                         "content": [
@@ -84,23 +70,39 @@ class MLLM:
                         ]
                     },
                 ]
-        # Generating answers and rationales
-        else:
-            query = 'You will be given an image and questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
+            # Generating answers and rationales
+            else:
+                query = 'You will be given an image and questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
+                messages = [
+                    { "role": "assistant", "content": self.system_prompt },
+                    { "role": "assistant", "content": questions },
+                    {
+                        "role": "user", 
+                        "content": [
+                            {"type": "image"},
+                            {"type": "text", "text": query}
+                        ]
+                    },
+                ]
+        elif self.inference_type == "backward_reasoning":
             messages = [
-                {
-                    "role": "assistant",
-                    "content": self.system_prompt
-                },
-                {
-                    "role": "assistant",
-                    "content": questions
-                },
+                { "role": "assistant", "content": self.system_prompt },
                 {
                     "role": "user", 
                     "content": [
                         {"type": "image"},
-                        {"type": "text", "text": query}
+                        {"type": "text", "text": f'Here is the answer-rationale pair: {questions}'}
+                    ]
+                },
+            ]
+        elif self.inference_type == "judge":
+            messages = [
+                { "role": "assistant", "content": self.system_prompt },
+                {
+                    "role": "user", 
+                    "content": [
+                        {"type": "image"},
+                        {"type": "text", "text": f'Here is the qar: {questions}'}
                     ]
                 },
             ]
@@ -150,17 +152,54 @@ class MLLM:
         output = output.split("\nASSISTANT: ")[1]
         return output
 
-    def generate_using_phi3(self, image, query, questions=None):
-        # TODO: Build query
+    def generate_using_phi3(self, image, use_evol_prompt, questions, evolvable_questions):
         placeholder = ""
         placeholder += f"<|image_1|>\n"
 
-        messages = [
-            {"role": "assistant", "content": self.system_prompt},
-            {"role": "user", "content": placeholder},
-            {"role": "user", "content": query}
-        ]
-
+        if self.inference_type == "generate":
+            if questions is None:
+                if use_evol_prompt:
+                    input_str = ''
+                    for evolvable_question in evolvable_questions:
+                        input_str += f'Original Question: {evolvable_question["question"]} Evolution Strategy: {evolvable_question["evolution_inst"]}\n'
+                
+                    # use evol method along with past questions for evolution (use evolvable_questions)
+                    query = ("Given the following list of original questions and their corresponding evolution strategies, improve each original " 
+                        "question by following its specific evolution strategy. Ensure that each evolved question requires commonsense knowledge, " 
+                        "understanding of the physical world, reasoning capabilities, and/or in-depth complexity, and that it can still be answered " 
+                        "in one to five words. Each evolved question should not have sub-questions and must retain relevance to the context of the image "
+                        "and must NOT copy-paste or use the example questions from the evolution strategies directly.\n\n" 
+                        "Inputs:\n"
+                        f"{input_str}\n"
+                        "Return the evolved questions as a list, comma separated and in one line, like this: [<evolved_question_1>, <evolved_question_2>, <evolved_question_3>], nothing else.")
+                else:
+                    query = "Generate 3 non-trivial, diverse questions (add '?' after each question) based on the image without hallucinating that can be answered using one to at max. five words. Each question can not have sub-questions. Return the questions in a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
+                messages = [
+                    {"role": "assistant", "content": self.system_prompt},
+                    {"role": "user", "content": placeholder},
+                    {"role": "user", "content": query}
+                ]
+            else:
+                query = 'You will be given an image and questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
+                messages = [
+                    {"role": "assistant", "content": self.system_prompt},
+                    {"role": "user", "content": placeholder},
+                    {"role": "user", "content": query},
+                    {"role": "user", "content": f'Here are the questions: {questions}'}
+                ]
+        elif self.inference_type == "backward_reasoning":
+            messages = [
+                {"role": "assistant", "content": self.system_prompt},
+                {"role": "user", "content": placeholder},
+                {"role": "user", "content": f'Here is the answer-rationale pair: {questions}'}
+            ]
+        elif self.inference_type == "judge":
+            messages = [
+                {"role": "assistant", "content": self.system_prompt},
+                {"role": "user", "content": placeholder},
+                {"role": "user", "content": f'Here is the qar: {questions}'}
+            ]
+        
         prompt = self.processor.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
@@ -202,9 +241,8 @@ class MLLM:
         if questions is None:
             prompt = f'{self.system_prompt}\n\n{query}'
         else:
-            prompt = f'{self.system_prompt}\n\n{questions}\n\n{query}'
+            prompt = f'{self.system_prompt}\n\n{query}\n\n{questions}'
 
-        pprint.pprint(prompt)
         inputs = self.processor.process(
             images=[image],
             text=prompt
@@ -259,7 +297,7 @@ class BackwardReasoner(MLLM):
         super().__init__(model, processor, model_family, inference_type)
         self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
         self.system_prompt = ("You are a helpful assistant designed to infer questions based on visual and textual inputs. "
-            "You will be provided with an image, as well as  one (answer, rationale) pair. Based on these inputs, your task is to infer "
+            "You will be provided with an image, as well as one (answer, rationale) pair. Based on these inputs, your task is to infer "
             "the most appropriate questions that could have led to the given answers and rationales.\n\n"
             "Here is how you will approach the task:\n"
             "1. Analyze the image and understand its context.\n"
@@ -277,13 +315,13 @@ class BackwardReasoner(MLLM):
         inferred_questions = []
         for (answer, rationale) in ar_pairs:
             if self.model_family == "llama_32":
-                output = self.generate_using_llama32(image, use_evol_prompt=False, questions=f'[{answer}, {rationale}]')
+                output = self.generate_using_llama32(image, use_evol_prompt=False, questions=f'[Answer: {answer}, Rationale: {rationale}]', evolvable_questions=[])
                 output = ast.literal_eval(output)
                 inferred_questions.append(output)
             else:
-                pass
-                #output = self.generate_using_phi3(image, f'[{answer}, {rationale}]')
-            #print(output)
+                output = self.generate_using_phi3(image, use_evol_prompt=False, questions=f'[Answer: {answer}, Rationale: {rationale}]', evolvable_questions=[])
+                output = ast.literal_eval(output)
+                inferred_questions.append(output)
         return inferred_questions
 
     def get_most_similar_question_score(self, question, inferred_questions):
@@ -302,9 +340,9 @@ class BackwardReasoner(MLLM):
     def verify_inference(self, qars, image):
         questions = [qar["question"] for qar in qars]
         ar_pairs = [(qar["answer"], qar["rationale"]) for qar in qars]
-        #inferred_questions = self.infer_questions(image, ar_pairs)
+        inferred_questions = self.infer_questions(image, ar_pairs)
         #print(inferred_questions)
-        inferred_questions = [["What is the primary characteristic of a rabbit's ears?", "What is a distinctive feature of a rabbit's eyes?", "What is a notable feature of a rabbit's tail?"], ["What is the rabbit's name?", 'What is the location of the scene?', "What is the rabbit's occupation?"], ['What type of clothing does the rabbit in the image wear?', "What is the color of the rabbit's coat?", "What is the rabbit wearing in the image?"]]
+        #inferred_questions = [["What is the primary characteristic of a rabbit's ears?", "What is a distinctive feature of a rabbit's eyes?", "What is a notable feature of a rabbit's tail?"], ["What is the rabbit's name?", 'What is the location of the scene?', "What is the rabbit's occupation?"], ['What type of clothing does the rabbit in the image wear?', "What is the color of the rabbit's coat?", "What is the rabbit wearing in the image?"]]
         for i, question in enumerate(questions):
             most_similar_question_score = self.get_most_similar_question_score(question, inferred_questions[i])
             qars[i]["br_score"] = most_similar_question_score * qars[i]["score"]
