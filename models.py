@@ -285,7 +285,7 @@ class Judge(MLLM):
     def evaluate(self, qars, image):
         if self.model_family == "phi_3_vision":
             for i, qar in enumerate(qars):
-                output = self.generate_using_phi3(image, str(qar))
+                output = self.generate_using_phi3(image, use_evol_prompt=False, questions=str(qar), evolvable_questions=[])
                 output = output.strip()
                 score, feedback = ast.literal_eval(output)
                 qars[i]["score"], qars[i]["feedback"] = score, feedback

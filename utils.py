@@ -171,7 +171,8 @@ def setup_judge_models(judge_models):
             judge_mllms.append(Judge(model, processor, model_family="llama_32", inference_type='judge'))
         # TODO: Pr 3 --> add other judge mllms (i.e. llava-critic, blip-3, sfr judge, prometheus)
         elif model_name == "llava_critic":
-            setup_llava_critic()
+            #setup_llava_critic()
+            pass
         elif model_name == "phi_3_vision":
             model, processor = setup_phi3_vision()
             judge_mllms.append(Judge(model, processor, model_family="phi_3_vision", inference_type='judge'))
@@ -196,7 +197,7 @@ def setup_models(generator_models, judge_model, br_model):
     br_mllm = None
     
     #generator_mllms = setup_generator_models(generator_models)
-    #judge_mllm = setup_judge_models([judge_model])[0]
+    judge_mllm = setup_judge_models([judge_model])[0]
     br_mllm = setup_backward_reasoning_models([br_model])[0]
     
     return (generator_mllms, judge_mllm, br_mllm)
