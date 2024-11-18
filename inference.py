@@ -50,6 +50,7 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
         #query = "Can you describe the activity of the animal in context of the image?"
         #query = "Can you generate 3 non-trivial, diverse questions and corresponding answers based on the image without hallucinating? Keep the answers precise and short (no over explanation).Return the question-answer pairs in a list following this structure: [{'question': <question>, 'answer': <answer>}]. Return only the list of JSON objects, nothing else."
         
+        '''
         use_evol_prompt = False
         if len(evolvable_questions) != 0:
             use_evol_prompt = True
@@ -106,7 +107,6 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
         # step 6: de-duplicate initially filtered qars
         unique_qars = deduplicate_qars(syn_qar_bucket)
         
-        '''
         evolvable_questions = []
         unique_qars = final_judge_mllm.evaluate(unique_qars, image)
         for unique_qar in unique_qars:
