@@ -152,6 +152,83 @@ class MLLM:
         output = output.split("\nASSISTANT: ")[1]
         return output
 
+
+    def generate_using_llava_next(self, image, use_evol_prompt, questions, evolvable_questions):
+        # Generating questions
+        if questions is None:
+            # Evolving generated questions
+            if use_evol_prompt:
+                input_str = ''
+                for evolvable_question in evolvable_questions:
+                    input_str += f'Original Question: {evolvable_question["question"]} Evolution Strategy: {evolvable_question["evolution_inst"]}\n'
+                
+                # use evol method along with past questions for evolution (use evolvable_questions)
+                query = ("Given the following list of original questions and their corresponding evolution strategies, improve each original " 
+                        "question by following its specific evolution strategy. Ensure that each evolved question requires commonsense knowledge, " 
+                        "understanding of the physical world, reasoning capabilities, and/or in-depth complexity, and that it can still be answered " 
+                        "in one to five words. Each evolved question should not have sub-questions and must retain relevance to the context of the image "
+                        "and must NOT copy-paste or use the example questions from the evolution strategies directly.\n\n" 
+                        "Inputs:\n"
+                        f"{input_str}\n"
+                        "Return the evolved questions as a list, comma separated and in one line, like this: [<evolved_question_1>, <evolved_question_2>, <evolved_question_3>], nothing else.")         
+            # 1st time generating questions
+            else:
+                query = "Generate 3 non-trivial, diverse questions (add '?' after each question) based on the image without hallucinating that can be answered using one to at max. five words. DO NOT ANSWER, JUST GENERATE QUESTIONS. Each question can not have sub-questions. Return all questions inside a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions (generate 3 questions, NOT LESS THAN THAT. AND MUST RETURN THEM INSIDE A LIST.), nothing else."
+                
+            messages = [
+                { 
+                    "role": "assistant", 
+                    "content": [
+                        {"type": "text", "text": self.system_prompt}
+                    ] 
+                },
+                {
+                    "role": "user", 
+                    "content": [
+                        {"type": "image"},
+                        {"type": "text", "text": query}
+                    ]
+                },
+            ]
+        # Generating answers and rationales
+        else:
+            query = 'Given an image and questions based on the image, generate a correct answer and a corresponding brief but insightful rationale for each question. The rationale should justify why the answer is correct by referencing specific details in the image or using logical inference when appropriate. Avoid vague statements; each rationale should clarify how the visible elements or context in the image supports the answer. Ensure answers are precise and concise (1-2 words if possible), and the rationale directly connects to the answer without over-explanation. Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. YOU MUST RETURN ALL NON-DUPLICATE JSON OBJECTS INSIDE A LIST.Return only the list of JSON objects, nothing else.'
+            
+            messages = [
+                { 
+                    "role": "assistant", 
+                    "content": [
+                        {"type": "text", "text": self.system_prompt}
+                    ]
+                },
+                { 
+                    "role": "assistant", 
+                    "content": [
+                        {"type": "text", "text": questions}
+                    ] 
+                },
+                {
+                    "role": "user", 
+                    "content": [
+                        {"type": "image"},
+                        {"type": "text", "text": query}
+                    ]
+                },
+            ]
+
+        input_text = self.processor.apply_chat_template(messages, add_generation_prompt=True)
+        inputs = self.processor(
+            image,
+            input_text,
+            return_tensors="pt"
+        ).to(self.model.device)
+
+        # TODO: Set same temperature for all generator MLLMs
+        #output = self.model.generate(**inputs, temperature=0.3, max_new_tokens=150)
+        output = self.model.generate(**inputs, max_new_tokens=300)
+        output = self.processor.decode(output[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True)
+        return output
+
     def generate_using_phi3(self, image, use_evol_prompt, questions, evolvable_questions):
         placeholder = ""
         placeholder += f"<|image_1|>\n"
@@ -270,6 +347,8 @@ class MLLM:
             output = self.generate_using_molmo(image, use_evol_prompt, questions, evolvable_questions)
         elif self.model_family == "llava":
             output = self.generate_using_llava(image, use_evol_prompt, questions, evolvable_questions)
+        elif self.model_family == "llava_next":
+            output = self.generate_using_llava_next(image, use_evol_prompt, questions, evolvable_questions)
         return output
 
 

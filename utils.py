@@ -11,7 +11,7 @@ import os
 
 import hashlib
 
-from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, LlavaForConditionalGeneration, GenerationConfig
+#from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, LlavaForConditionalGeneration, GenerationConfig
 
 from fuzzywuzzy import fuzz
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -25,6 +25,8 @@ from llava.model.builder import load_pretrained_model
 from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
 from llava.conversation import conv_templates, SeparatorStyle
+
+from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 
 from datasets import load_dataset
 from models import MLLM, Judge, BackwardReasoner, FinalJudge
@@ -40,19 +42,8 @@ def setup_llama32():
     model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
     model = MllamaForConditionalGeneration.from_pretrained(
         model_id,
-        torch_dtype=torch.bfloat16,
+        torch_dtype="auto",
         device_map="auto",
-    )
-    processor = AutoProcessor.from_pretrained(model_id)
-    return (model, processor)
-
-def setup_molmo():
-    model_id = "allenai/Molmo-7B-D-0924"
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        trust_remote_code=True,
-        torch_dtype=torch.bfloat16,
-        device_map='auto'
     )
     processor = AutoProcessor.from_pretrained(
         model_id,
@@ -60,6 +51,24 @@ def setup_molmo():
         torch_dtype='auto',
         device_map='auto'
     )
+
+    return (model, processor)
+
+def setup_molmo():
+    model_id = "allenai/Molmo-7B-D-0924"
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype="auto",
+        device_map="auto"
+    )
+    processor = AutoProcessor.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype='auto',
+        device_map='auto'
+    )
+
     return (model, processor)
 
 def setup_llava():
@@ -69,7 +78,7 @@ def setup_llava():
     model = LlavaForConditionalGeneration.from_pretrained(
         model_id,
         trust_remote_code=True,
-        torch_dtype=torch.bfloat16,
+        torch_dtype="auto",
         device_map="auto"
     )
 
@@ -82,22 +91,7 @@ def setup_llava():
 
     return (model, processor)
 
-def setup_generator_models(generator_models):
-    generator_mllms = []
-    for model_name in generator_models:
-        if model_name == "llama32":
-            model, processor = setup_llama32()
-            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))
-        elif model_name == "molmo":
-            # NOT WORKING: Bug fix is needed
-            model, processor = setup_molmo()
-            generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type="generate"))
-        elif model_name == "llava":
-            model, processor = setup_llava()
-            generator_mllms.append(MLLM(model, processor, model_family="llava", inference_type="generate"))    
-    return generator_mllms
-
-'''
+# TODO: Fix bugs
 def setup_llava_critic():
     warnings.filterwarnings("ignore")
     model_id = "lmms-lab/llava-critic-7b"
@@ -143,7 +137,6 @@ def setup_llava_critic():
         model_name, 
         device_map="auto"
     )
-'''
 
 def setup_phi3_vision():
     model_id = "microsoft/Phi-3.5-vision-instruct" 
@@ -162,6 +155,46 @@ def setup_phi3_vision():
         num_crops=16
     )
     return (model, processor)
+
+
+def setup_llava_next():
+    model_id = "llava-hf/llava-v1.6-mistral-7b-hf"
+    
+    model = LlavaNextForConditionalGeneration.from_pretrained(
+        model_id, 
+        device_map="cuda",
+        trust_remote_code=True,
+        torch_dtype="auto"
+    )
+
+    processor = LlavaNextProcessor.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype='auto',
+        device_map='auto'
+    )
+
+    return (model, processor)
+
+
+def setup_generator_models(generator_models):
+    generator_mllms = []
+    for model_name in generator_models:
+        if model_name == "llama32":
+            model, processor = setup_llama32()
+            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))
+        elif model_name == "molmo":
+            # NOT WORKING: Bug fix is needed
+            model, processor = setup_molmo()
+            generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type="generate"))
+        elif model_name == "llava":
+            model, processor = setup_llava()
+            generator_mllms.append(MLLM(model, processor, model_family="llava", inference_type="generate"))    
+        elif model_name == "llava_next":
+            model, processor = setup_llava_next()
+            generator_mllms.append(MLLM(model, processor, model_family="llava_next", inference_type="generate"))
+    return generator_mllms
+
     
 def setup_judge_models(judge_models):
     judge_mllms = []
@@ -234,8 +267,10 @@ def deduplicate_qars(qars):
 
     return nonsimilar_qars
 
+# TODO: Fix bugs 
 def setup_final_judge():
     warnings.filterwarnings("ignore")
+    '''
     pretrained = "lmms-lab/llava-onevision-qwen2-7b-ov"
     model_name = "llava_qwen"
     device = "cuda"
@@ -243,6 +278,14 @@ def setup_final_judge():
     tokenizer, model, processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
     final_judge = FinalJudge(model, processor, tokenizer, max_length)
     return final_judge
+
+    pretrained = "lmms-lab/llava-critic-7b"
+    model_name = "llava_qwen"
+    device = "cuda"
+    device_map = "auto"
+    tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
+    '''
+
 
 def get_gpu_details():
     gpu_count = torch.cuda.device_count()
