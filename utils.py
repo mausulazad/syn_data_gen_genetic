@@ -1,5 +1,7 @@
 import requests
+import pprint
 import copy
+import json
 import torch
 from PIL import Image
 from typing import Dict
@@ -11,7 +13,8 @@ import os
 
 import hashlib
 
-#from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, LlavaForConditionalGeneration, GenerationConfig
+from transformers import pipeline
+from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, LlavaForConditionalGeneration, GenerationConfig
 
 from fuzzywuzzy import fuzz
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -30,6 +33,23 @@ from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 
 from datasets import load_dataset
 from models import MLLM, Judge, BackwardReasoner, FinalJudge
+
+CRITERIA = [
+    "The question should require commonsense knowledge about human social behavior to answer.",
+    "The question should require knowledge of the physical world to answer.",
+    "The question should necessitate visual understanding to answer.",
+    "The question should challenge the system's reasoning capabilities.",
+    "The question should be sufficiently complex to require in-depth reasoning."
+]
+
+FEW_SHOT_QUESTIONS = [
+    "What might happen if the person in the image dropped the object they are holding?",
+    "How might the people in the image respond if one of them started laughing?",
+    "Based on the setting in the image, what time of day is most likely depicted?",
+    "What might the person in the image do next based on their posture?",
+    "How could the objects in the image interact with one another?"
+]
+
 
 def load_and_preprocess_dataset(dataset_name):
     if dataset_name == "aokvqa":
@@ -180,9 +200,10 @@ def setup_llava_next():
 def setup_generator_models(generator_models):
     generator_mllms = []
     for model_name in generator_models:
-        if model_name == "llama32":
+        if model_name == "llama_32":
             model, processor = setup_llama32()
-            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))
+            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate", criteria=CRITERIA, few_shot_questions=FEW_SHOT_QUESTIONS))
+        '''
         elif model_name == "molmo":
             # NOT WORKING: Bug fix is needed
             model, processor = setup_molmo()
@@ -193,6 +214,7 @@ def setup_generator_models(generator_models):
         elif model_name == "llava_next":
             model, processor = setup_llava_next()
             generator_mllms.append(MLLM(model, processor, model_family="llava_next", inference_type="generate"))
+        '''
     return generator_mllms
 
     
@@ -298,4 +320,147 @@ def estimate_model_ram_usage():
     pass
 
 
+def setup_slm():
+    # model_id = "meta-llama/Llama-3.2-1B-Instruct"
+    model_id = "meta-llama/Llama-3.2-3B-Instruct"
+    
+    slm = pipeline(
+        "text-generation",
+        model=model_id,
+        max_new_tokens=500,
+        temperature=0.7,
+        torch_dtype="auto",
+        device_map="auto",
+    )
 
+    return slm
+
+def postprocess_qars(qars_text):
+    system_prompt = """You are an helpful assistant who processes structured responses provided in a text format (such as QAR NO, QUESTION, ANSWER, RATIONALE) and converts them into a JSON-parseable list of triplets. Each triplet contains the fields:
+        - "question": The question text.
+        - "answer": The corresponding answer.
+        - "rationale": The explanation or justification for the answer.
+
+        ### Guidelines:
+        1. Parse each response carefully to extract all valid question-answer-rationale (QAR) triplets.
+        2. Return the results as a single JSON-parseable list of objects, where each object has the fields:
+          {
+            "question": <question text>,
+            "answer": <corresponding correct answer>,
+            "rationale": <corresponding rationale>
+          }
+        3. The input structure may differ from the examples provided (e.g., different formatting, separators, or label styles). Be flexible and adapt to extract QAR triplets from alternative structures while ensuring accuracy.
+        4. Ensure the output strictly adheres to JSON format and is parseable.
+        5. If a QAR triplet is incomplete or missing (e.g., only a question is provided without an answer or rationale), skip that entry.
+        6. If the provided input is in an unknown or unexpected format and no valid triplets are found, return an empty JSON list: `[]`.
+
+        ### Example Input:
+        QAR NO 1  
+        QUESTION: What is the person doing?,  
+        ANSWER: Cycling.,  
+        RATIONALE: The image shows a person riding a bicycle on a trail in a forest, indicating they are cycling.
+
+        QAR NO 2  
+        QUESTION: Why is the person cycling in the forest?,  
+        ANSWER: For recreation or exercise.,  
+        RATIONALE: Cycling in natural settings like forests is often associated with recreational or fitness activities.
+
+        ### Example Output:
+        [
+          {"question": "What is the person doing?", "answer": "Cycling.", "rationale": "The image shows a person riding a bicycle on a trail in a forest, indicating they are cycling."},
+          {"question": "Why is the person cycling in the forest?", "answer": "For recreation or exercise.", "rationale": "Cycling in natural settings like forests is often associated with recreational or fitness activities."}
+        ]
+
+        DO NOT copy-paste the example inputs-outputs. They are solely for understanding the format and quality expectations.
+        
+        If no valid QAR triplets are found or the input format is not recognized, return an empty list: `[]`. DO NOT attempt to hallucinate or infer missing data."""
+     
+    query = """You will be provided with a text response in the format of structured QAR triplets (e.g., such as QAR NO, QUESTION, ANSWER, RATIONALE). Your task is to:
+        1. Parse the text to extract valid QAR triplets into a JSON-parseable list.
+        2. Each QAR triplet should be represented as an object with the following fields:
+          - "question": The question text.
+          - "answer": The corresponding answer.
+          - "rationale": The explanation or justification for the answer.
+
+        ### Instructions:
+        - For each valid QAR triplet in the input, create a corresponding JSON object.
+        - Skip entries if any part of the triplet (question, answer, or rationale) is missing.
+        - The input structure may differ from the given example structure (e.g., different separators, label formatting, or order). Be flexible and adapt to process such variations while maintaining accuracy.
+        - If the input format is unknown or no valid triplets are found, return an empty JSON list: `[]`.
+        - Do not modify or hallucinate the content; only parse what is explicitly provided.
+
+        ### Example Input:
+        QAR NO 1  
+        QUESTION: What is the purpose of the vehicle?,  
+        ANSWER: To transport goods.,  
+        RATIONALE: The vehicle depicted is a van, commonly used for transporting goods in urban areas.
+
+        QAR NO 2  
+        QUESTION: Where is the vehicle located?,  
+        ANSWER: In a parking lot.,  
+        RATIONALE: The image shows the vehicle parked in a designated parking area.
+
+        ### Example Output:
+        [
+          {"question": "What is the purpose of the vehicle?", "answer": "To transport goods.", "rationale": "The vehicle depicted is a van, commonly used for transporting goods in urban areas."},
+          {"question": "Where is the vehicle located?", "answer": "In a parking lot.", "rationale": "The image shows the vehicle parked in a designated parking area."}
+        ]
+        
+        DO NOT copy-paste the example inputs-outputs. They are solely for understanding the format and quality expectations."""
+
+    messages = [
+        { "role": "system", "content": system_prompt },
+        { "role": "system", "content": query},
+        { 
+            "role": "user", 
+            "content": f"Here is the input text: {qars_text}.\n\nParse the input text and return a JSON list of QAR triplets. If no valid triplets are found, return: `[]`"
+        },
+    ]
+
+# TODO
+def generate_sample_data(image_data, file_name, mllm, image_ids = []):
+    sample_syn_qars = []
+    sample_count = 0
+    if len(image_ids) == 0:
+        for i, image_details in enumerate(image_data):
+            if sample_count > 50:
+                file_path = '/teamspace/studios/this_studio/syn_data_gen_genetic/syn_data_gen_genetic/sample_q_no_rules_zero_shot.json'
+                with open(file_path, 'w') as json_file:
+                    json.dump(sample_syn_qars, json_file, indent=4)
+                break
+            questions = mllm.generate(image_details["image"], use_evol_prompt=False, questions=None, evolvable_questions=[], max_new_tokens=300)
+            syn_qars = mllm.generate(image_details["image"], use_evol_prompt=False, questions=questions, evolvable_questions=[], max_new_tokens=1000)
+            structured_syn_qars = postprocess_qars(syn_qars)
+            try:
+                syn_qars = json.loads(structured_syn_qars)
+                sample_syn_qars.append({
+                    "serial": i,
+                    "syn_qars": syn_qars
+                })
+                sample_count += 1
+            except json.JSONDecodeError:
+                print(f'Error: Could not parse syn_qars for {i}-th training image, moving to next image.')
+    else:
+        file_path = '/teamspace/studios/this_studio/syn_data_gen_genetic/syn_data_gen_genetic/{file_name}'
+        
+        cc = 0
+        for idx in image_ids:
+            #questions = mllm.generate(image_data[idx]["image"], use_evol_prompt=False, questions=None, evolvable_questions=[])
+            #syn_qars = mllm.generate(image_data[idx]["image"], use_evol_prompt=False, questions=questions, evolvable_questions=[])
+            structured_syn_qars = postprocess_qars(syn_qars)
+            '''
+            print(f"SAMPLE {cc+1}: ")
+            print(syn_qars)
+            cc += 1
+            if cc > 10:
+                break
+            '''
+
+    return sample_syn_qars
+
+
+def load_json_file(file_name):
+    file_path = f'/teamspace/studios/this_studio/syn_data_gen_genetic/syn_data_gen_genetic/{file_name}'
+    with open(file_path, 'r') as json_file:
+        data = json.load(json_file)
+    return data

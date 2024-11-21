@@ -1,5 +1,6 @@
 import re
 import json
+import random
 
 import ast
 import pprint
@@ -18,17 +19,97 @@ from llava.conversation import conv_templates, SeparatorStyle
 from transformers import pipeline
 
 class MLLM:
-    def __init__(self, model, processor, model_family, inference_type):
+    def __init__(self, model, processor, model_family, inference_type, criteria=[], few_shot_questions=[]):
         self.model = model
         self.processor = processor
         self.model_family = model_family
-        self.inference_type = inference_type 
-        self.system_prompt = self.get_system_prompt(inference_type)
+        self.inference_type = inference_type
+        
+        # TODO: Randomize and build system prompt using these two inside 'generate' method (do not update original system prompt though)
+        self.criteria = criteria
+        self.few_shot_questions = few_shot_questions
+        if inference_type == "generate": 
+            self.question_system_prompt = self.get_system_prompt(inference_type, generate_questions=True)
+            self.answer_system_prompt = self.get_system_prompt(inference_type, generate_questions=False)
+        else:
+            self.system_prompt = self.get_system_prompt(inference_type, generate_questions=False)
+
     
-    def get_system_prompt(self, inference_type):
+    def get_system_prompt(self, inference_type, generate_questions=True):
         prompt = None
         if inference_type == "generate":
-            prompt = "You are an helpful assistant. You help people in generating synthetic questions/answers/rationales (as instructed by the user) related to images."
+            if generate_questions:
+                prompt = """You are an helpful assistant. Based on a given image, you will generate questions that challenge advanced reasoning systems like ChatGPT or GPT-4. Ensure the generated questions adhere to the following crieteria:
+                    ###CRITERIA###:
+                    {criteria}
+
+                    When generating questions, follow a chain-of-thought approach:
+                    - First, carefully analyze the image content to identify key visual elements, interactions, or context.
+                    - Next, consider how these elements relate to human social behavior, physical world knowledge, and reasoning capabilities.
+                    - Then, formulate a question that integrates these observations, ensuring it is relevant to the image and adheres to at least one of the criteria.
+                    - Finally, verify the question for diversity, non-triviality, and adherence to the task requirements.
+
+                    Here are few examples of such questions:
+                    {example_questions}
+
+                    Important instructions:
+                    - DO NOT directly copy-paste these example questions, as they are not directly based on the given image. Use them as inspiration to create new, unique questions specifically relevant to the given image.
+                    - NEVER HALLUCINATE information or details that are not present or cannot be inferred from the given image. Ensure all generated questions are grounded in the image content.
+
+                    Strive to generate questions that meet as many of these criteria as possible."""
+            else:
+                prompt = """You are an helpful assistant. Based on a given image and questions (related to that image) you answer the questions by providing correct answers with justifications. To maintain high-quality and accurate responses, adhere to the following guidelines:
+
+                    ###GUIDELINES###:
+                    1. Ensure all answers are grounded in the image's content. Internal knowledge may also be used to enhance answers, but only when it aligns logically with the image and does not involve hallucination.
+                    2. Follow a chain-of-thought reasoning process internally:
+                        - First, analyze the image to identify relevant details and context.
+                        - Then, interpret the questions in relation to these details.
+                        - Formulate concise answers based on observable evidence in the image, supplemented with internal knowledge if relevant.
+                        - Provide brief rationales that logically justify why the answers are correct.
+                    3. When reasoning, focus on visual clues such as actions, objects, expressions, and environmental factors, complemented by valid external knowledge if it aids in providing better answers.
+                    4. Keep all responses precise and focused, avoiding over-explanation.
+                    5. Do not directly copy-paste any provided examples, as they are unrelated to the given image. The examples are intended solely for understanding tone, format, and quality expectations.
+                    6. Return answers and rationales in a structured format, ensuring all triplets are included in a single list of JSON objects.
+                    7. Note: An actual image (not an image description) will be provided as input. Use the visual content of the image, along with relevant internal knowledge, to formulate your responses.
+
+                    ###EXAMPLES###:
+                    
+                    ###EXAMPLE 1:
+                    #### Example Input:
+                    Image: [An image showing a woman holding an umbrella on a rainy street with other people walking by.]
+                    Questions: ["Why is the woman holding the umbrella?", "What might happen if the woman closes the umbrella?"]
+
+                    #### Example Output:
+                    QAR NO 1  
+                    QUESTION: Why is the woman holding the umbrella?,  
+                    ANSWER: To stay dry.,  
+                    RATIONALE: The image shows rain falling and the woman holding the umbrella open. Using an umbrella in rain is a common practice to stay dry.  
+                    
+                    QAR NO 2
+                    QUESTION: What might happen if the woman closes the umbrella?,  
+                    ANSWER: She will get dranched.,  
+                    RATIONALE: The image depicts rain, and an umbrella is used to shield from it. Closing the umbrella would expose her to the rain.
+
+                    ###EXAMPLE 2:
+                    #### Example Input:
+                    Image: [An image showing a dog lying under a tree on a sunny day, with a ball placed nearby.]
+                    Questions: ["Why is the dog lying under the tree?", "Why is the ball not being played with?"]
+ 
+                    #### Example Output:
+                    QAR NO 1  
+                    QUESTION: Why is the dog lying under the tree?,  
+                    ANSWER: For shade.,  
+                    RATIONALE: The image shows it is sunny, and the tree provides shade. Dogs often seek shade to avoid direct sunlight and cool down.  
+
+                    QAR NO 2  
+                    QUESTION: Why is the ball not being played with?,  
+                    ANSWER: The dog is resting.,  
+                    RATIONALE: The dog appears to be lying down and resting under the tree, suggesting it is not active at the moment to play with the ball.
+
+                    Use these examples as a reference for tone, style, format, and quality level. Ensure all question-answer-rationale triplets follow this specified format and are preceded by the `QAR NO <number>` separator. DO NOT directly copy or adapt these examples. DO NOT include any intermediate reasoning, CoT steps, or explanations in the output.
+                    
+                    Strive to answer questions with proper rationale that are on-par with the questions (quality-wise)."""
         # LATER: Modify system prompt
         elif inference_type == "judge":
             prompt = "You are an helpful assistant"
@@ -37,7 +118,21 @@ class MLLM:
             prompt = "You are an helpful assistant. Given an answer and image, you try to infer the corresponding question."
         return prompt
 
-    def generate_using_llama32(self, image, use_evol_prompt, questions, evolvable_questions):
+    def randomize_criteria(self):
+        randomized_criteria = random.sample(self.criteria, len(self.criteria))
+        #random.shuffle(self.criteria)
+        randomized_criteria = [f"{i+1}. {criterion}" for i, criterion in enumerate(randomized_criteria)]
+        randomized_criteria = "\n".join(randomized_criteria)
+        return randomized_criteria
+
+    def randomized_few_shot_questions(self):
+        randomized_few_shot_questions = random.sample(self.few_shot_questions, len(self.few_shot_questions))
+        #random.shuffle(self.few_shot_questions)
+        randomized_few_shot_questions = [f"Example {i+1}: {question}" for i, question in enumerate(randomized_few_shot_questions)]
+        randomized_few_shot_questions = "\n".join(randomized_few_shot_questions)
+        return randomized_few_shot_questions
+    
+    def generate_using_llama32(self, image, use_evol_prompt, questions, evolvable_questions, criteria, few_shot_questions, max_new_tokens):
         if self.inference_type == "generate":
             # Generating questions
             if questions is None:
@@ -58,10 +153,28 @@ class MLLM:
                         "Return the evolved questions as a list, comma separated and in one line, like this: [<evolved_question_1>, <evolved_question_2>, <evolved_question_3>], nothing else.")         
                 # 1st time generating questions
                 else:
-                    query = "Generate 3 non-trivial, diverse questions (add '?' after each question) based on the image without hallucinating that can be answered using one to at max. five words. Each question can not have sub-questions. Return the questions in a list (comma separated) like this: [<question 1>, <question 2>, <question 3>]. Return only the list of questions, nothing else."
+                    query = """
+                        1. Generate exactly 3 diverse and non-trivial questions based on the given image.
+                        2. Use a chain-of-thought approach to generate questions:
+                            - Analyze the image to identify key visual elements, interactions, or context.
+                            - Consider how these elements relate to human social behavior, physical world knowledge, and reasoning capabilities.
+                            - Formulate a question that integrates these observations, ensuring it is relevant to the image and adheres to at least one of the criteria.
+                            - Verify the question for diversity, non-triviality, and adherence to the task requirements.
+                        3. Ensure all questions are strictly based on the content of the image and do not introduce details or concepts that cannot be directly inferred.
+                        4. DO NOT hallucinate any information; all questions must be fully grounded in the given image.
+                        5. Follow the rules outlined in the system prompt, ensuring relevance, clarity, and proper formatting of the questions.
+                        6. Each question must:
+                            - End with a '?'.
+                            - Be answerable in 1 to 5 words only.
+                            - Not include any sub-questions.
+                        7. Return the questions as a comma-separated list enclosed in square brackets, formatted like this: [<question 1>, <question 2>, <question 3>].
+                        8. DO NOT provide answers or any additional information beyond the formatted list.
+                        9. Ensure that there are no fewer than 3 questions, and all strictly follow these rules."""
+                
+                system_prompt = self.question_system_prompt.format(criteria=criteria, example_questions=few_shot_questions)
                 
                 messages = [
-                    { "role": "assistant", "content": self.system_prompt },
+                    { "role": "assistant", "content": system_prompt },
                     {
                         "role": "user", 
                         "content": [
@@ -72,10 +185,35 @@ class MLLM:
                 ]
             # Generating answers and rationales
             else:
-                query = 'You will be given an image and questions that are based on the image. For each question generate correct answer and corresponding brief rationale (rationale should justify briefly why the answer is correct) without hallucinating. Keep the answers precise and short (no over explanation). Return the question, answer, rationale triplets in a list following this structure: [{"question": <given question>, "answer": <corresponding correct answer>, "rationale": <corresponding rationale>}]. Return only the list of JSON objects, nothing else.'
+                query = """You will be given an image and questions based on the image. For each question:
+                    1. Use a chain-of-thought reasoning style internally for answer and rationale generation:
+                        - First, analyze the image to identify relevant details and context.
+                        - Then, interpret the question in relation to these details.
+                        - Formulate concise answers based on observable evidence in the image, supplemented with internal knowledge if relevant.
+                        - Provide brief rationales that logically justify why the answers are correct.
+                    2. Generate a correct and precise answer based on the content of the image. You may also use internal knowledge to aid in answering the question, but only if the knowledge aligns logically with the image content and does not involve hallucination.
+                    3. Provide a corresponding brief rationale to justify why the answer is correct.
+                    4. Ensure that both the answer and rationale are grounded in observable details from the image, supplemented by valid knowledge where applicable.
+                    5. Keep the answers and rationales concise, avoiding over-explanation.
+
+                    Important Instructions:
+                    - DO NOT directly copy-paste any provided examples, as they are unrelated to the given image. Examples are solely for understanding tone, style, format, and quality level expected in your responses.
+                    - NEVER HALLUCINATE information or provide details that are not supported by the image or relevant, valid knowledge.
+
+                    Precede each triplet (QUESTION, ANSWER, RATIONALE) with the tag `QAR NO <number>`. Use the following format:
+                    
+                    QAR NO <number>  
+                    QUESTION: <question text>,  
+                    ANSWER: <corresponding correct answer>,  
+                    RATIONALE: <corresponding rationale>.  
+
+                    Instead of an image description, an actual image will be provided. Use its content along with valid internal knowledge to formulate your responses.
+
+                    DO NOT include any intermediate reasoning, CoT steps, or explanations in the output. Return only the structured response in the specified format, nothing else."""
+                
                 messages = [
-                    { "role": "assistant", "content": self.system_prompt },
-                    { "role": "assistant", "content": questions },
+                    { "role": "assistant", "content": self.answer_system_prompt },
+                    { "role": "assistant", "content": f"Questions: {questions}" },
                     {
                         "role": "user", 
                         "content": [
@@ -115,10 +253,12 @@ class MLLM:
             return_tensors="pt"
         ).to(self.model.device)
 
-        output = self.model.generate(**inputs, max_new_tokens=300)
+        output = self.model.generate(
+            **inputs, 
+            temperature=1.0, 
+            max_new_tokens=max_new_tokens
+        )
         output = self.processor.decode(output[0][inputs.input_ids.shape[-1]:])
-        
-        # llama-32 specific
         output = output.split('<|eot_id|>')[0]
         return output
 
@@ -339,16 +479,20 @@ class MLLM:
         return output
 
     # base-64 encoded image
-    def generate(self, image, use_evol_prompt=False, questions=None, evolvable_questions=[]):
+    def generate(self, image, use_evol_prompt=False, questions=None, evolvable_questions=[], max_new_tokens=300):
         output = None
+        randomized_criteria = self.randomize_criteria()
+        randomized_few_shot_questions = self.randomized_few_shot_questions()
         if self.model_family == "llama_32":
-            output = self.generate_using_llama32(image, use_evol_prompt, questions, evolvable_questions)
+            output = self.generate_using_llama32(image, use_evol_prompt, questions, evolvable_questions, randomized_criteria, randomized_few_shot_questions, max_new_tokens)
+        '''
         elif self.model_family == "molmo":
             output = self.generate_using_molmo(image, use_evol_prompt, questions, evolvable_questions)
         elif self.model_family == "llava":
             output = self.generate_using_llava(image, use_evol_prompt, questions, evolvable_questions)
         elif self.model_family == "llava_next":
             output = self.generate_using_llava_next(image, use_evol_prompt, questions, evolvable_questions)
+        '''
         return output
 
 
