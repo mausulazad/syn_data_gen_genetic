@@ -1,0 +1,1022 @@
+[
+    {
+        "serial": 0,
+        "syn_qars": [
+            {
+                "question": "Is the man in front of a house?",
+                "answer": "Yes",
+                "rationale": "The man is standing on the sidewalk in front of a house."
+            },
+            {
+                "question": "Is the man wearing blue jeans?",
+                "answer": "Yes",
+                "rationale": "The man is wearing a pair of blue jeans."
+            },
+            {
+                "question": "Is the man wearing a watch?",
+                "answer": "Yes",
+                "rationale": "The man is wearing a watch on his left wrist."
+            }
+        ]
+    },
+    {
+        "serial": 1,
+        "syn_qars": [
+            {
+                "question": "What is man pointing at?",
+                "answer": "pizza",
+                "rationale": "The man is pointing at the pizza on the plate."
+            },
+            {
+                "question": "What is on man's shirt?",
+                "answer": "a car and a bus",
+                "rationale": "The man's shirt features an image of a car and a bus."
+            },
+            {
+                "question": "What is on plate?",
+                "answer": "pizza",
+                "rationale": "The plate contains a slice of pizza."
+            }
+        ]
+    },
+    {
+        "serial": 2,
+        "syn_qars": [
+            {
+                "question": "Is this a desert?",
+                "answer": "Yes",
+                "rationale": "The image shows a vast, dry, and sandy area with no visible vegetation or signs of water."
+            },
+            {
+                "question": "Is the tractor red?",
+                "answer": "Yes",
+                "rationale": "The tractor in the image has a reddish-brown color."
+            },
+            {
+                "question": "Are the sheep white?",
+                "answer": "Yes",
+                "rationale": "The sheep in the image appear to be white."
+            }
+        ]
+    },
+    {
+        "serial": 4,
+        "syn_qars": [
+            {
+                "question": "What is the bike's color?",
+                "answer": "Blue",
+                "rationale": "The bike's color is visible in the image."
+            },
+            {
+                "question": "What is the bike's seat made of?",
+                "answer": "Leather",
+                "rationale": "The seat appears to be made of leather due to its texture and appearance."
+            },
+            {
+                "question": "What is the bike's windshield material?",
+                "answer": "Plastic",
+                "rationale": "The windshield appears to be made of plastic due to its transparency and shape."
+            }
+        ]
+    },
+    {
+        "serial": 5,
+        "syn_qars": [
+            {
+                "question": "Is the man wearing a tie?",
+                "answer": "Yes",
+                "rationale": "The man is wearing a tie as part of his formal attire."
+            },
+            {
+                "question": "Is the man holding a bag?",
+                "answer": "Yes",
+                "rationale": "The man is holding a bag in his hand."
+            },
+            {
+                "question": "Is the man in the background wearing a suit?",
+                "answer": "Yes",
+                "rationale": "The man in the background is wearing a suit."
+            }
+        ]
+    },
+    {
+        "serial": 6,
+        "syn_qars": [
+            {
+                "question": "What is the cow's color?",
+                "answer": "Brown",
+                "rationale": "The cow is brown in color."
+            },
+            {
+                "question": "What is the man's occupation?",
+                "answer": "Farmer",
+                "rationale": "The man is sitting in a field with cows, suggesting he is a farmer."
+            },
+            {
+                "question": "What is the cow eating?",
+                "answer": "Grass",
+                "rationale": "The cow is standing in a grassy field, indicating it is eating grass."
+            }
+        ]
+    },
+    {
+        "serial": 7,
+        "syn_qars": [
+            {
+                "question": "Is it raining?",
+                "answer": "Yes",
+                "rationale": "The presence of raindrops on the ground and the people holding umbrellas indicates rain."
+            },
+            {
+                "question": "Is it daytime?",
+                "answer": "No",
+                "rationale": "The dim lighting and the absence of direct sunlight suggest nighttime."
+            },
+            {
+                "question": "Is it a city?",
+                "answer": "Yes",
+                "rationale": "The presence of a car and buildings in the background indicates an urban setting."
+            }
+        ]
+    },
+    {
+        "serial": 8,
+        "syn_qars": [
+            {
+                "question": "What is the bus number?",
+                "answer": "3025",
+                "rationale": "The bus number is displayed on the front of the bus."
+            },
+            {
+                "question": "Is the man wearing a tie?",
+                "answer": "Yes",
+                "rationale": "The man is wearing a dark-colored tie."
+            },
+            {
+                "question": "Is the sky clear?",
+                "answer": "Yes",
+                "rationale": "The sky is a clear blue color with no visible clouds."
+            }
+        ]
+    },
+    {
+        "serial": 9,
+        "syn_qars": [
+            {
+                "question": "What is the bus's destination?",
+                "answer": "Cherry Hinton",
+                "rationale": "The destination is written on the front of the bus."
+            },
+            {
+                "question": "What color is the man's backpack?",
+                "answer": "Dark",
+                "rationale": "The man's backpack is dark in color."
+            },
+            {
+                "question": "How many cars are there?",
+                "answer": "4",
+                "rationale": "There are 4 cars in the image."
+            }
+        ]
+    },
+    {
+        "serial": 10,
+        "syn_qars": [
+            {
+                "question": "Are the bikes in a line?",
+                "answer": "No",
+                "rationale": "The bikes are scattered on the ground."
+            },
+            {
+                "question": "Are the people sitting?",
+                "answer": "Yes",
+                "rationale": "The people are lying on the grass."
+            },
+            {
+                "question": "Is the frisbee in the air?",
+                "answer": "Yes",
+                "rationale": "The frisbee is visible in the air."
+            }
+        ]
+    },
+    {
+        "serial": 11,
+        "syn_qars": [
+            {
+                "question": "What is the bread type?",
+                "answer": "Baguette",
+                "rationale": "The bread has a long and narrow shape with a crispy crust and a soft interior, which is characteristic of a baguette."
+            },
+            {
+                "question": "Is the sandwich halved?",
+                "answer": "Yes",
+                "rationale": "The sandwich is cut in half lengthwise, with the filling visible on both sides."
+            },
+            {
+                "question": "Is the lettuce fresh?",
+                "answer": "Yes",
+                "rationale": "The lettuce appears to be crisp and green, indicating that it is fresh."
+            }
+        ]
+    },
+    {
+        "serial": 12,
+        "syn_qars": [
+            {
+                "question": "What is the bus number?",
+                "answer": "101",
+                "rationale": "The bus number is visible on the front of the bus."
+            },
+            {
+                "question": "What is the bus route?",
+                "answer": "Gallions Reach",
+                "rationale": "The bus route is indicated on the front of the bus."
+            },
+            {
+                "question": "Is the bus red?",
+                "answer": "Yes",
+                "rationale": "The bus is painted red."
+            }
+        ]
+    },
+    {
+        "serial": 13,
+        "syn_qars": [
+            {
+                "question": "What is the theater's name?",
+                "answer": "Ricardo Montalban Theatre",
+                "rationale": "The theater's name is displayed on the marquee."
+            },
+            {
+                "question": "What is the genre of the play?",
+                "answer": "Drama",
+                "rationale": "The play is described as a 'drama' on the marquee."
+            },
+            {
+                "question": "What is the color of the motorcycle's seat?",
+                "answer": "Black",
+                "rationale": "The motorcycle's seat is black in color."
+            }
+        ]
+    },
+    {
+        "serial": 15,
+        "syn_qars": [
+            {
+                "question": "What is the cake made of?",
+                "answer": "Carrot",
+                "rationale": "The cake appears to be a carrot cake based on its brown color and texture."
+            },
+            {
+                "question": "What is the color of the frosting?",
+                "answer": "White",
+                "rationale": "The frosting is white, as evident from the image."
+            },
+            {
+                "question": "How many forks are there?",
+                "answer": "1",
+                "rationale": "There is only one fork visible in the image."
+            }
+        ]
+    },
+    {
+        "serial": 16,
+        "syn_qars": [
+            {
+                "question": "Is the image indoors?",
+                "answer": "Yes",
+                "rationale": "The presence of a wall and a computer monitor suggests an indoor setting."
+            },
+            {
+                "question": "Is the image in focus?",
+                "answer": "No",
+                "rationale": "The blurry appearance of the image indicates a lack of focus."
+            },
+            {
+                "question": "Is the image blurry?",
+                "answer": "Yes",
+                "rationale": "The lack of sharpness in the image's details suggests blurriness."
+            }
+        ]
+    },
+    {
+        "serial": 17,
+        "syn_qars": [
+            {
+                "question": "Are they pilots?",
+                "answer": "Yes",
+                "rationale": "They are wearing pilot uniforms."
+            },
+            {
+                "question": "Are they marching?",
+                "answer": "Yes",
+                "rationale": "They are walking in a line."
+            },
+            {
+                "question": "Is it daytime?",
+                "answer": "Yes",
+                "rationale": "The sun is shining."
+            }
+        ]
+    },
+    {
+        "serial": 18,
+        "syn_qars": [
+            {
+                "question": "Is the batter left-handed?",
+                "answer": "No",
+                "rationale": "The batter is holding the bat in his right hand."
+            },
+            {
+                "question": "What color is the catcher's helmet?",
+                "answer": "Red",
+                "rationale": "The catcher's helmet is red."
+            },
+            {
+                "question": "Is the catcher kneeling?",
+                "answer": "Yes",
+                "rationale": "The catcher is on one knee."
+            }
+        ]
+    },
+    {
+        "serial": 19,
+        "syn_qars": [
+            {
+                "question": "What is the man's hair color?",
+                "answer": "Bald",
+                "rationale": "The man is bald, as evidenced by the lack of hair on his head."
+            },
+            {
+                "question": "What color is the tent?",
+                "answer": "Red and White",
+                "rationale": "The tent is red and white, as indicated by its visible coloration."
+            },
+            {
+                "question": "What color is the fridge?",
+                "answer": "White",
+                "rationale": "The fridge is white, as shown by its visible color."
+            }
+        ]
+    },
+    {
+        "serial": 20,
+        "syn_qars": [
+            {
+                "question": "What is the color of the desk?",
+                "answer": "white",
+                "rationale": "The desk is white."
+            },
+            {
+                "question": "What is the color of the bag?",
+                "answer": "black",
+                "rationale": "The bag is black."
+            },
+            {
+                "question": "What is the brand of the monitor?",
+                "answer": "Apple",
+                "rationale": "The monitor is an Apple product."
+            }
+        ]
+    },
+    {
+        "serial": 21,
+        "syn_qars": [
+            {
+                "question": "What is the train's destination?",
+                "answer": "OBB",
+                "rationale": "The train's destination is indicated by the letters 'OBB' on the side of the train."
+            },
+            {
+                "question": "What is the train's color?",
+                "answer": "red",
+                "rationale": "The train is red in color."
+            },
+            {
+                "question": "What is the train's engine number?",
+                "answer": "515 006",
+                "rationale": "The train's engine number is visible on the front of the train."
+            }
+        ]
+    },
+    {
+        "serial": 22,
+        "syn_qars": [
+            {
+                "question": "What is the bus number?",
+                "answer": "95",
+                "rationale": "The bus number is displayed on the front of the bus."
+            },
+            {
+                "question": "What is the driver wearing?",
+                "answer": "Blue raincoat",
+                "rationale": "The driver is wearing a blue raincoat."
+            },
+            {
+                "question": "What is the weather?",
+                "answer": "Rainy",
+                "rationale": "The ground is wet and there is a puddle on the road."
+            }
+        ]
+    },
+    {
+        "serial": 24,
+        "syn_qars": [
+            {
+                "question": "What is the time on the clock?",
+                "answer": "3:34",
+                "rationale": "The clock's hour hand points to the 3 and the minute hand points to the 6, which corresponds to 3:34."
+            },
+            {
+                "question": "What is the color of the sky?",
+                "answer": "Blue",
+                "rationale": "The sky in the image is a clear blue color."
+            },
+            {
+                "question": "What is the color of the pole?",
+                "answer": "Black",
+                "rationale": "The pole is painted black."
+            }
+        ]
+    },
+    {
+        "serial": 25,
+        "syn_qars": [
+            {
+                "question": "What is the car's color?",
+                "answer": "Grey",
+                "rationale": "The car's interior and exterior are both grey."
+            },
+            {
+                "question": "What is the cat's color?",
+                "answer": "Grey and white",
+                "rationale": "The cat has a grey body with white paws and chest."
+            },
+            {
+                "question": "Is the cat male or female?",
+                "answer": "Unknown",
+                "rationale": "The cat's gender cannot be determined from the image."
+            }
+        ]
+    },
+    {
+        "serial": 26,
+        "syn_qars": [
+            {
+                "question": "What is the brand of the surfboard?",
+                "answer": "O'Neill",
+                "rationale": "The surfboard has a logo on it that matches the O'Neill logo."
+            },
+            {
+                "question": "What is the brand of the wetsuit?",
+                "answer": "Rip Curl",
+                "rationale": "The wetsuit has a logo on it that matches the Rip Curl logo."
+            },
+            {
+                "question": "What is the brand of the umbrella?",
+                "answer": "adidas",
+                "rationale": "The umbrella has a logo on it that matches the adidas logo."
+            }
+        ]
+    },
+    {
+        "serial": 27,
+        "syn_qars": [
+            {
+                "question": "What is the sign's message?",
+                "answer": "Management is destroying our airline.",
+                "rationale": "The sign's message is clearly stated as 'Management is destroying our airline'."
+            },
+            {
+                "question": "What is the pilot's uniform?",
+                "answer": "Pilot uniform.",
+                "rationale": "The pilot is wearing a uniform that includes a dark jacket with epaulets, a white shirt, and a tie, which is consistent with a typical pilot uniform."
+            },
+            {
+                "question": "What is the sign's color?",
+                "answer": "White, blue, and red.",
+                "rationale": "The sign has a white background with blue and red text."
+            }
+        ]
+    },
+    {
+        "serial": 28,
+        "syn_qars": [
+            {
+                "question": "What is the boy's age?",
+                "answer": "7",
+                "rationale": "The boy's age is 7 because he is sitting on the boat with a life jacket."
+            },
+            {
+                "question": "What is the dog's breed?",
+                "answer": "West Highland White Terrier",
+                "rationale": "The dog is wearing a black and yellow vest, which is commonly worn by West Highland White Terriers."
+            },
+            {
+                "question": "What is the dog's color?",
+                "answer": "White",
+                "rationale": "The dog is white with a black and yellow vest."
+            }
+        ]
+    },
+    {
+        "serial": 29,
+        "syn_qars": [
+            {
+                "question": "What is the parking meter's color?",
+                "answer": "Gray",
+                "rationale": "The parking meter is gray because it is made of metal and has a gray finish."
+            },
+            {
+                "question": "What is the car's color?",
+                "answer": "Silver",
+                "rationale": "The car is silver because it is a metallic color and has a reflective finish."
+            },
+            {
+                "question": "What is the parking meter's function?",
+                "answer": "To collect parking fees",
+                "rationale": "The parking meter is used to collect fees from drivers who park their cars in designated parking spaces."
+            }
+        ]
+    },
+    {
+        "serial": 30,
+        "syn_qars": [
+            {
+                "question": "What is the pitcher's name?",
+                "answer": "Unknown",
+                "rationale": "The image does not provide the pitcher's name."
+            },
+            {
+                "question": "Is the pitcher right-handed?",
+                "answer": "Yes",
+                "rationale": "The pitcher is using his right hand to throw the ball."
+            },
+            {
+                "question": "Who is the umpire?",
+                "answer": "Unknown",
+                "rationale": "The image does not provide the umpire's name."
+            }
+        ]
+    },
+    {
+        "serial": 31,
+        "syn_qars": [
+            {
+                "question": "What is the man holding?",
+                "answer": "cell phone",
+                "rationale": "The man is holding an object in his hand, which appears to be a cell phone based on its shape and size."
+            },
+            {
+                "question": "Is the woman wearing shorts?",
+                "answer": "yes",
+                "rationale": "The woman is wearing a short skirt or shorts, which is visible in the image."
+            },
+            {
+                "question": "What is the vehicle in the background?",
+                "answer": "van",
+                "rationale": "The vehicle in the background appears to be a van based on its shape and size."
+            }
+        ]
+    },
+    {
+        "serial": 32,
+        "syn_qars": [
+            {
+                "question": "What is the company name?",
+                "answer": "Capital Group Companies",
+                "rationale": "The company name is written on the back of the bus."
+            },
+            {
+                "question": "What is the bus number?",
+                "answer": "9",
+                "rationale": "The bus number is written on the top of the bus."
+            },
+            {
+                "question": "What is the license plate number?",
+                "answer": "SJB0222",
+                "rationale": "The license plate number is written on the back of the bus."
+            }
+        ]
+    },
+    {
+        "serial": 33,
+        "syn_qars": [
+            {
+                "question": "What is the color of the umbrella on the left?",
+                "answer": "Red, White and Blue",
+                "rationale": "The umbrella on the left is an American flag."
+            },
+            {
+                "question": "Is the car silver?",
+                "answer": "Yes",
+                "rationale": "The car is silver in color."
+            },
+            {
+                "question": "Is the taxi yellow?",
+                "answer": "Yes",
+                "rationale": "The taxi is yellow in color."
+            }
+        ]
+    },
+    {
+        "serial": 34,
+        "syn_qars": [
+            {
+                "question": "What is the surfer's destination?",
+                "answer": "The beach.",
+                "rationale": "The surfer is walking towards the water, suggesting they are heading to the beach."
+            },
+            {
+                "question": "Where is the surfer from?",
+                "answer": "Unknown.",
+                "rationale": "There is no visible indication of the surfer's location or origin."
+            },
+            {
+                "question": "What is the surfer carrying?",
+                "answer": "A surfboard.",
+                "rationale": "The surfer is holding a long, flat object that resembles a surfboard."
+            }
+        ]
+    },
+    {
+        "serial": 35,
+        "syn_qars": [
+            {
+                "question": "What is the woman wearing?",
+                "answer": "a red coat",
+                "rationale": "The woman is wearing a red coat because it is a prominent color in the image."
+            },
+            {
+                "question": "What is the dog's color?",
+                "answer": "white",
+                "rationale": "The dog is white because it is a light color that stands out in the image."
+            },
+            {
+                "question": "What is the weather like?",
+                "answer": "rainy",
+                "rationale": "The image shows a rainy day because of the gray sky and the woman holding an umbrella."
+            }
+        ]
+    },
+    {
+        "serial": 36,
+        "syn_qars": [
+            {
+                "question": "What is the woman's hair color?",
+                "answer": "Black",
+                "rationale": "The woman's hair is dark and appears to be black."
+            },
+            {
+                "question": "What is the color of the tablecloth?",
+                "answer": "Red and white checkered",
+                "rationale": "The tablecloth has a red and white checkered pattern."
+            },
+            {
+                "question": "What is the woman's shirt color?",
+                "answer": "Purple",
+                "rationale": "The woman's shirt is a deep purple color."
+            }
+        ]
+    },
+    {
+        "serial": 37,
+        "syn_qars": [
+            {
+                "question": "What color is the trash can?",
+                "answer": "green",
+                "rationale": "The trash can is sitting on the grass, which is green."
+            },
+            {
+                "question": "What color is the grass?",
+                "answer": "green",
+                "rationale": "The grass is the color of the trash can."
+            },
+            {
+                "question": "What is the color of the sky?",
+                "answer": "blue",
+                "rationale": "The sky is visible in the top right corner of the image."
+            }
+        ]
+    },
+    {
+        "serial": 38,
+        "syn_qars": [
+            {
+                "question": "What is the woman wearing?",
+                "answer": "A white t-shirt",
+                "rationale": "The woman is wearing a white t-shirt with a graphic on it."
+            },
+            {
+                "question": "What is the man wearing?",
+                "answer": "A black shirt",
+                "rationale": "The man is wearing a black shirt."
+            },
+            {
+                "question": "What is the woman eating?",
+                "answer": "A sandwich",
+                "rationale": "The woman is holding a sandwich in her hands."
+            }
+        ]
+    },
+    {
+        "serial": 39,
+        "syn_qars": [
+            {
+                "question": "What color are the dogs' eyes?",
+                "answer": "Brown",
+                "rationale": "The dogs' eyes are brown."
+            },
+            {
+                "question": "What is the person wearing on their left hand?",
+                "answer": "Ring",
+                "rationale": "The person is wearing a ring on their left hand."
+            },
+            {
+                "question": "What is the color of the couch?",
+                "answer": "Blue",
+                "rationale": "The couch is blue."
+            }
+        ]
+    },
+    {
+        "serial": 40,
+        "syn_qars": [
+            {
+                "question": "Are the elephants male?",
+                "answer": "Yes",
+                "rationale": "The elephants have tusks, which are typically found in male elephants."
+            },
+            {
+                "question": "What are the elephants doing?",
+                "answer": "Feeding",
+                "rationale": "The elephants are standing near a fence with their trunks extended, suggesting they are feeding."
+            },
+            {
+                "question": "Where are the elephants standing?",
+                "answer": "Near a fence",
+                "rationale": "The elephants are standing next to a fence, which is likely a feeding enclosure."
+            }
+        ]
+    },
+    {
+        "serial": 41,
+        "syn_qars": [
+            {
+                "question": "Is the truck orange?",
+                "answer": "yes",
+                "rationale": "The truck has an orange body."
+            },
+            {
+                "question": "Is the street gray?",
+                "answer": "yes",
+                "rationale": "The street has a gray surface."
+            },
+            {
+                "question": "Is the traffic light green?",
+                "answer": "yes",
+                "rationale": "The traffic light is green."
+            }
+        ]
+    },
+    {
+        "serial": 42,
+        "syn_qars": [
+            {
+                "question": "What is the man's shirt color?",
+                "answer": "Yellow",
+                "rationale": "The man's shirt is yellow."
+            },
+            {
+                "question": "What is the boy's hat color?",
+                "answer": "Red",
+                "rationale": "The boy's hat is red."
+            },
+            {
+                "question": "What is the man's hair color?",
+                "answer": "Black",
+                "rationale": "The man has black hair."
+            }
+        ]
+    },
+    {
+        "serial": 43,
+        "syn_qars": [
+            {
+                "question": "What is the bus number?",
+                "answer": "1302",
+                "rationale": "The bus number is displayed on the front of the bus."
+            },
+            {
+                "question": "Is it a city bus?",
+                "answer": "Yes",
+                "rationale": "The bus is shown on a road with other vehicles, indicating it is a city bus."
+            },
+            {
+                "question": "What is the route number?",
+                "answer": "258",
+                "rationale": "The route number is displayed on the front of the bus."
+            }
+        ]
+    },
+    {
+        "serial": 45,
+        "syn_qars": [
+            {
+                "question": "What is the bus number?",
+                "answer": "516",
+                "rationale": "The bus number is displayed on the front of the bus."
+            },
+            {
+                "question": "What is the color of the bus?",
+                "answer": "White",
+                "rationale": "The bus is predominantly white with blue accents."
+            },
+            {
+                "question": "Is the woman wearing glasses?",
+                "answer": "Yes",
+                "rationale": "The woman is wearing glasses."
+            }
+        ]
+    },
+    {
+        "serial": 46,
+        "syn_qars": [
+            {
+                "question": "What is the truck's brand?",
+                "answer": "Penske",
+                "rationale": "The truck's brand is visible on the back of the trailer."
+            },
+            {
+                "question": "What is the color of the truck's cab?",
+                "answer": "Yellow",
+                "rationale": "The cab of the truck is yellow."
+            },
+            {
+                "question": "What is the type of the vehicle behind the truck?",
+                "answer": "Box truck",
+                "rationale": "The vehicle behind the truck appears to be a box truck."
+            }
+        ]
+    },
+    {
+        "serial": 47,
+        "syn_qars": [
+            {
+                "question": "What is the phone model?",
+                "answer": "Sony Ericsson",
+                "rationale": "The text at the top of the screen reads 'Sony Ericsson'."
+            },
+            {
+                "question": "What is the screen resolution?",
+                "answer": "Not visible",
+                "rationale": "The screen resolution is not visible in the image."
+            },
+            {
+                "question": "What is the phone color?",
+                "answer": "Black",
+                "rationale": "The phone appears to be black based on the visible color."
+            }
+        ]
+    },
+    {
+        "serial": 48,
+        "syn_qars": [
+            {
+                "question": "What is the sport being played?",
+                "answer": "Soccer",
+                "rationale": "The image shows a soccer field with a ball and players in uniforms, indicating that the sport being played is soccer."
+            },
+            {
+                "question": "What color is the ball?",
+                "answer": "White",
+                "rationale": "The ball is visible in the image and appears to be white."
+            },
+            {
+                "question": "Who is wearing red?",
+                "answer": "The player in the middle",
+                "rationale": "The player in the middle is wearing a red jersey, indicating that they are the one wearing red."
+            }
+        ]
+    },
+    {
+        "serial": 49,
+        "syn_qars": [
+            {
+                "question": "What is the man's attire?",
+                "answer": "Shorts",
+                "rationale": "The man is wearing shorts."
+            },
+            {
+                "question": "What is the man's tattoo?",
+                "answer": "Not visible",
+                "rationale": "The man's tattoo is not visible in the image."
+            },
+            {
+                "question": "How many bananas are there?",
+                "answer": "At least 50",
+                "rationale": "There are at least 50 bananas in the image."
+            }
+        ]
+    },
+    {
+        "serial": 50,
+        "syn_qars": [
+            {
+                "question": "What is the player with the number 24 doing?",
+                "answer": "batting",
+                "rationale": "The player is holding a bat and appears to be in the process of swinging it."
+            },
+            {
+                "question": "What is the player's name?",
+                "answer": "Ankiel",
+                "rationale": "The name is visible on the back of the player's jersey."
+            },
+            {
+                "question": "Is the player wearing a red helmet?",
+                "answer": "yes",
+                "rationale": "The player's helmet is red."
+            }
+        ]
+    },
+    {
+        "serial": 51,
+        "syn_qars": [
+            {
+                "question": "What is the boy's age?",
+                "answer": "6",
+                "rationale": "The boy's age is 6 because he is wearing a shirt with a number 6 on it."
+            },
+            {
+                "question": "What is the boy's height?",
+                "answer": "4 feet",
+                "rationale": "The boy's height is 4 feet because he is standing on a skateboard that is about 4 feet long."
+            },
+            {
+                "question": "What is the boy's shirt color?",
+                "answer": "Blue",
+                "rationale": "The boy's shirt color is blue because it is the dominant color of his shirt."
+            }
+        ]
+    },
+    {
+        "serial": 52,
+        "syn_qars": [
+            {
+                "question": "What is the street sign's name?",
+                "answer": "Redmond Way",
+                "rationale": "The street sign is clearly visible and reads 'Redmond Way'."
+            },
+            {
+                "question": "What is the color of the car?",
+                "answer": "Gold",
+                "rationale": "The car has a gold-colored body."
+            },
+            {
+                "question": "How many cars are in the image?",
+                "answer": "4",
+                "rationale": "There are four cars visible in the image."
+            }
+        ]
+    },
+    {
+        "serial": 53,
+        "syn_qars": [
+            {
+                "question": "What street is the sign on?",
+                "answer": "Walk On",
+                "rationale": "The sign is located on the corner of Walk On and another street, but the other street is not clearly visible."
+            },
+            {
+                "question": "What color is the sign?",
+                "answer": "green",
+                "rationale": "The sign is a green street sign."
+            },
+            {
+                "question": "What is on top of the trailer?",
+                "answer": "cupcake",
+                "rationale": "The trailer has a large cupcake on top of it."
+            }
+        ]
+    },
+    {
+        "serial": 54,
+        "syn_qars": [
+            {
+                "question": "What is the color of the plane?",
+                "answer": "Blue",
+                "rationale": "The plane is blue."
+            },
+            {
+                "question": "What is the name of the airport?",
+                "answer": "Los Angeles International Airport",
+                "rationale": "The airport is identified by the sign on the ground."
+            },
+            {
+                "question": "What is the airline name?",
+                "answer": "Southwest Airlines",
+                "rationale": "The airline name is written on the side of the plane."
+            }
+        ]
+    }
+]
