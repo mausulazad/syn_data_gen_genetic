@@ -10,6 +10,7 @@ import ast
 import sys
 import warnings
 import os
+import re
 
 import hashlib
 
@@ -301,13 +302,15 @@ def setup_final_judge():
     tokenizer, model, processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
     final_judge = FinalJudge(model, processor, tokenizer, max_length)
     return final_judge
+    '''
 
     pretrained = "lmms-lab/llava-critic-7b"
     model_name = "llava_qwen"
     device = "cuda"
     device_map = "auto"
     tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
-    '''
+    final_judge = FinalJudge(model, image_processor, tokenizer, max_length)
+    return final_judge
 
 
 def get_gpu_details():
@@ -328,7 +331,7 @@ def setup_slm():
     slm = pipeline(
         "text-generation",
         model=model_id,
-        max_new_tokens=500,
+        max_new_tokens=1000,
         temperature=0.7,
         torch_dtype="auto",
         device_map="auto",
@@ -448,7 +451,148 @@ def postprocess_qars(slm, qar_text):
 
     outputs = slm(messages)
     output = outputs[0]["generated_text"][-1]['content']
+    output = clean_out_json_output(output)
     return output
+
+def postprocess_judgement_details(slm, judgement_text):
+    system_prompt = """You are a helpful assistant responsible for converting evaluation outputs from a judge model into a consistent, JSON-structured format. Your input will contain evaluations of a question based on specific criteria, with scores, justifications, failures, and evolution methods presented in text form.
+
+        ### Task:
+        1. Parse the input text and extract all relevant details.
+        2. Convert the extracted details into the following JSON format:
+        ```json
+        {
+            "scores": {
+                "commonsense": {
+                    "value": <integer>,
+                    "justification": "<string>"
+                },
+                "physical_world": {
+                    "value": <integer>,
+                    "justification": "<string>"
+                },
+                "visual_understanding": {
+                    "value": <integer>,
+                    "justification": "<string>"
+                },
+                "reasoning": {
+                    "value": <integer>,
+                    "justification": "<string>"
+                },
+                "complexity": {
+                    "value": <integer>,
+                    "justification": "<string>"
+                }
+            },
+            "total_score": <integer>,
+            "total_justification": "<string>",
+            "failures": "<string or null>",
+            "evolution_method": "<string>"
+        }
+
+        ### Instructions:
+        1.Ensure Correct Parsing:
+          -Extract scores and justifications for each criterion (commonsense, physical_world, visual_understanding, reasoning, complexity).
+          -Capture the total_score, total_justification, failures, and evolution_method as presented in the input.
+        2. DO NOT infer or hallucinate missing details. Use only the explicitly provided information.
+        3. The input structure may differ from the given example structure (e.g., different separators, label formatting, or order). Be flexible and adapt to process such variations while maintaining accuracy.
+        4. If any field is missing in the input, return an error message in JSON format:
+            ```json
+            {
+                "error": "Incomplete or invalid input structure"
+            }
+        5. Output a Valid JSON Object: Ensure the output is strictly JSON-compliant and contains no additional text, comments, or formatting issues. Each field should be correctly extracted and formatted as per the schema.
+
+        ### Example Input (for valid input):
+        ### Scores:
+        - **Commonsense**: 10
+          - The question assumes that the man is traveling, which is a reasonable assumption given the context of him carrying luggage.
+        - **Physical World**: 5
+          - The question does not require specific knowledge of the physical world beyond understanding that people travel with luggage.
+        - **Visual Understanding**: 10
+          - The question directly relates to the visual content of the image, where the man is seen with luggage.
+        - **Reasoning**: 20
+          - The question requires reasoning to infer the man's destination based on his actions and the context.
+        - **Complexity**: 10
+          - The question is straightforward but requires some inference.
+
+        **Total Score**: 65
+
+        **Justification**:
+        The question is well-rounded, requiring both commonsense knowledge and reasoning capabilities. It directly relates to the visual content of the image and does not overly complicate the task.
+
+        **Failures**:
+        None identified.
+
+        **Evolution Method**:
+        To improve the question without compromising its quality, one could add more context or details that would make the inference more challenging. For example, asking about the man's specific destination (e.g., 'What city is he heading to?') would increase the complexity while still being relevant to the image.
+
+        ### Example Output:
+        {
+            "scores": {
+                "commonsense": {
+                    "value": 10,
+                    "justification": "The question assumes that the man is traveling, which is a reasonable assumption given the context of him carrying luggage."
+                },
+                "physical_world": {
+                    "value": 5,
+                    "justification": "The question does not require specific knowledge of the physical world beyond understanding that people travel with luggage."
+                },
+                "visual_understanding": {
+                    "value": 10,
+                    "justification": "The question directly relates to the visual content of the image, where the man is seen with luggage."
+                },
+                "reasoning": {
+                    "value": 20,
+                    "justification": "The question requires reasoning to infer the man's destination based on his actions and the context."
+                },
+                "complexity": {
+                    "value": 10,
+                    "justification": "The question is straightforward but requires some inference."
+                }
+            },
+            "total_score": 65,
+            "total_justification": "The question is well-rounded, requiring both commonsense knowledge and reasoning capabilities. It directly relates to the visual content of the image and does not overly complicate the task.",
+            "failures": null,
+            "evolution_method": "To improve the question without compromising its quality, one could add more context or details that would make the inference more challenging. For example, asking about the man's specific destination (e.g., 'What city is he heading to?') would increase the complexity while still being relevant to the image."
+        }
+
+        ### Handling Invalid or Missing Input: If the input is unrelated, incomplete, or does not match the expected structure, return:
+        {
+            "error": "Incomplete or invalid input structure"
+        }
+
+        DO NOT copy-paste the example inputs-outputs. They are solely for understanding the format and quality expectations.
+        DO NOT include any additional text, explanation, or code outside the JSON object in the response."""
+
+    messages = [
+        { "role": "system", "content": system_prompt },
+        { 
+            "role": "user", 
+            "content": f"Here is the input text: {judgement_text}.\n\nParse the input text and return a JSON object (follow the detailed instructions and rules stated in system prompt)."
+        },
+    ]
+
+    outputs = slm(messages)
+    output = outputs[0]["generated_text"][-1]['content']
+    cleaned_output = clean_out_json_output(output)
+    
+    try:
+        parsed_output = json.loads(cleaned_output)
+    except json.JSONDecodeError:
+        print(f'Error: Could not parse syn_qar')
+        parsed_output = None
+    return parsed_output
+
+def clean_out_json_output(json_string):
+    lines = json_string.splitlines()
+    if lines[0].startswith("```"):
+        lines = lines[1:]
+    if lines[-1].startswith("```"):
+        lines = lines[:-1]
+    cleaned_json = "\n".join(lines).strip()
+    
+    return cleaned_json
 
 # TODO
 def generate_sample_data(image_data, file_name, slm, mllm, image_ids = []):
@@ -513,3 +657,18 @@ def load_json_file(file_name):
     with open(file_path, 'r') as json_file:
         data = json.load(json_file)
     return data
+
+"""
+    for i, qar_text in enumerate(qar_texts):
+        qars = postprocess_qars(slm, qar_text)
+        print(f"\nSAMPLE {i+1}: ")
+        try:
+            syn_qars = json.loads(qars)
+        except json.JSONDecodeError:
+            #print(f'Error: Could not parse syn_qars for {random_i}-th training image, moving to next mllm.')
+            continue
+        print(type(syn_qars))
+        if len(syn_qars) != 0:
+            print(type(syn_qars[0]))
+        print("xxxxxxxxxxxxxxxxxxxxxxxx")
+    """ 

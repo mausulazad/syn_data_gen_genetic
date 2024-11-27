@@ -669,58 +669,111 @@ class FinalJudge:
         self.device = "cuda"
         self.device_map = "auto"
         self.conv_template = "qwen_1_5"
-        self.system_prompt = ("You will be given a question related to the image.\n"
-            "Evaluate the quality of the question for challenging advanced reasoning systems like ChatGPT or GPT-4 on following criteria:\n"
-            "- Add 20 points if the question requires commonsense knowledge about human social behavior to answer, otherwise add 0.\n"
-            "- Add 20 points if the question requires knowledge of the physical world to answer, otherwise add 0.\n"
-            "- Add 20 point if visual understanding is necessary to answer the question, otherwise add 0.\n"
-            "- Add 20 point if the question challenges the system's reasoning capabilities, otherwise add 0.\n"
-            "- Add 20 point if the question is sufficiently complex to require in-depth reasoning, otherwise add 0.\n\n"
-            "Sum up the score (do not hallucinate, do proper arithmetic operation, can be at max 100). After scoring out of 100, examine the question and identify the cases it failed to meet:\n"
-            "- First, Justify your total score, up to 100 words.\n"
-            "- Next, briefly discuss the criterion the question failed to meet in under 100 words.\n"
-            "- Now propose a question evolving method which would address the shortcoming and overall improve the question, WITHOUT directly providing example questions.\n\n"
+        self.system_prompt = """You will be given an image and a question related to the image. 
+
+            Evaluate the quality of the question based on the following **criteria** and assign scores for each criterion on a scale of 0-20:
+            1. Commonsense knowledge about human social behavior.
+            2. Knowledge of the physical world.
+            3. Visual understanding.
+            4. Reasoning capabilities.
+            5. Complexity requiring in-depth reasoning.
+
+            ### Instructions:
+            1. For each criterion, assign a score (integer value) between 0 and 20, based on how well the question satisfies the criterion.
+            2. **Accurately calculate the total score as the sum of all individual criterion scores**. Ensure the arithmetic is correct (e.g., 20 + 15 + 10 + 20 + 15 = 80).
+            3. Briefly justify the total score and individual criterion scores in one or two sentences.
+            4. Identify criteria where the question scored low or failed, with a short explanation.
+            5. Suggest a method to evolve (improve) the question to better meet the criteria. Ensure that evolving the question to improve certain aspects does **not compromise or lower the quality of other aspects**.
+
+            ### Important Note:
+            Instead of an image description, an **actual image** will be provided for evaluation. Use the image content to assess the question and assign scores. DO NOT hallucinate or infer details that cannot be directly observed or logically deduced from the image.
+
+            ### Output Format:
+            Provide the evaluation in the following structured format. Do NOT use strict JSON, but keep the structure clear and detectable:
+
+            - **Scores**:
+              - Commonsense: <score>
+              - Physical World: <score>
+              - Visual Understanding: <score>
+              - Reasoning: <score>
+              - Complexity: <score>
+            - **Total Score**: <total score>
+            - **Justification**: <brief justification of the total score and individual scores>
+            - **Failures**: <brief explanation of criteria not fully met>
+            - **Evolution Method**: <method to evolve (improve) the question without lowering the quality of other aspects>
+
+            ### Positive Example Input:
+            Image: [An actual photo of a person riding a bicycle on a sunny street.]
+            Question (to be judged): "Why is the person riding the bicycle?"
+
+            ### Positive Example Output:
+            - **Scores**:
+              - Commonsense: 20
+              - Physical World: 15
+              - Visual Understanding: 10
+              - Reasoning: 20
+              - Complexity: 15
+            - **Total Score**: 80
+            - **Justification**: The question requires commonsense and reasoning but relies less on visual understanding and complexity.
+            - **Failures**: The question scored low on visual understanding and complexity.
+            - **Evolution Method**: Add elements that require specific visual details to answer and make the question more open-ended to enhance complexity without reducing its reliance on commonsense and reasoning.
+
+            ### Negative Example Input:
+            Image: [An actual photo of a person riding a bicycle on a sunny street.]
+            Question (to be judged): "What is the scientific name of cockroach?"
+
+            ### Negative Example Output:
+            - **Scores**:
+              - Commonsense: 0
+              - Physical World: 0
+              - Visual Understanding: 0
+              - Reasoning: 0
+              - Complexity: 0
+            - **Total Score**: 0
+            - **Justification**: The question is unrelated to the image and does not meet any of the specified criteria.
+            - **Failures**: The question does not rely on visual content or reasoning relevant to the image.
+            - **Evolution Method**: Ensure the question directly relates to the image's content and challenges reasoning capabilities.
+
+            ### Important Note on Examples:
+            - The examples provided above are for **reference purposes only**. They are intended to demonstrate the expected structure, tone, and reasoning.
+            - **DO NOT copy-paste or reuse the examples directly in your response.**
+            - Use the examples solely to understand the task and expected output format.
             
-            "DO NOT, I REPEAT, DO NOT ANSWER THE QUESTION. YOU MUST JUDGE IT, BASED ON GIVEN CRITERION."
-            "Finally, return the score, justification, failures, evolution method as a JSON STRUCTURE. I NEED TO PARSE IT LATER," 
-            "SO DONT ADD ANYTHING ELSE AFTER OR BEFORE THE JSON OBJECT, OTHERWISE IT WILL BREAK MY CODE AND I WILL BE VERY SAD.\n"
-            "- Please do NOT add new lines or tabs in the JSON.\n"
-            "- Always return a valid parse-able JSON STRUCTURE. YOU ALWAYS FORGET THAT. THIS WILL CAUSE A FIRE ON A PRODUCTION SERVER BEING USED BY MILLIONS.\n"
-            "The JSON structure will have following key-value items:\n"
-            "1. score: <Total score out of 100>\n"
-            "2. justification: <Justification of given score>\n"
-            "3. failures: <Brief desciption of given criterion that are not present in question>\n"
-            "4. evolution_method: <A question evolving method that can be used to generate an evolved question that meets all/most criterion>\n")
+            Neither favor nor punish due to your internal bias. DO FAIR JUDGEMENT."""
 
     
     # base-64 encoded image
-    def evaluate(self, qars, image):
+    def evaluate(self, image, qars):
         image_tensor = process_images([image], self.processor, self.model.config)
         image_tensor = [_image.to(dtype=torch.float16, device=self.device) for _image in image_tensor]
-    
+        #print(image_tensor[0].dtype)
+        
+        kk = 0
         for i, qar in enumerate(qars):
-            question = f'{DEFAULT_IMAGE_TOKEN}\nThis is the question to judge: {qar["question"]}'
+            query = f'{DEFAULT_IMAGE_TOKEN}\nQuestion (to be judged): {qar["question"]}'
             conv = copy.deepcopy(conv_templates[self.conv_template])
             conv.append_message(conv.roles[1], self.system_prompt)
-            conv.append_message(conv.roles[0], question)
-            judge_prompt = conv.get_prompt()
+            conv.append_message(conv.roles[0], query)
+            input_text = conv.get_prompt()
 
-            input_ids = tokenizer_image_token(judge_prompt, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(self.device)
+            input_ids = tokenizer_image_token(input_text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(self.model.device)
             image_sizes = [image.size]
 
-            cont = self.model.generate(
+            #print(input_ids)
+            
+            outputs = self.model.generate(
                 input_ids,
                 images=image_tensor,
                 image_sizes=image_sizes,
-                do_sample=False,
-                temperature=0.3,
-                max_new_tokens=4096,
+                temperature=0.1,
+                max_new_tokens=1000,
             )
+            
+            judgement_text = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
+            qars[i]["judgement_details"] = judgement_text
 
-            judgement_text = self.tokenizer.batch_decode(cont, skip_special_tokens=True)
-            judgement_text = self.parse_judgement(judgement_text[0])
-            qars[i]['evaluation'] = judgement_text
-
+            #judgement_text = self.parse_judgement(judgement_text[0])
+            #qars[i]['evaluation'] = judgement_text
         return qars
 
     def parse_judgement(self, judgement):
