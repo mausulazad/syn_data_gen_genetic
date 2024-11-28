@@ -10,7 +10,7 @@ import sys
 import warnings
 import os
 
-from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, setup_final_judge, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details
+from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, setup_final_judge, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details, convert_and_upload_to_hf
 
 from steps import generate_qars, judge_qars, verify_inference, deduplicate_qars, generate_evol_method
 
@@ -85,7 +85,9 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         if i >= 50:
             break
 
-    # TODO: store in huggingface or as json file
+    # Store in huggingface repo
+    repo_name = "syn_dataset_no_evolution_single_run"
+    convert_and_upload_to_hf(synthetic_qars, repo_name)
             
 
 """
