@@ -10,17 +10,16 @@ import sys
 import warnings
 import os
 
-from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, deduplicate_qars, setup_final_judge, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details
+from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, setup_final_judge, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details
 
-#from steps import generate_qars, judge_qars, verify_inference, generate_evol_method
+from steps import generate_qars, judge_qars, verify_inference, deduplicate_qars, generate_evol_method
 
-"""
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
-    slm = setup_slm()
-    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
-    final_judge = setup_final_judge()
+    #slm = setup_slm()
+    #generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    #inal_judge = setup_final_judge()
 
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
@@ -31,56 +30,65 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
 
     #TODO: append object with options and image id
     synthetic_qars = []
-    for data in seed_dataset:
+    slm = None
+    generator_mllms = ["molmo", "llama_32", "llava_32"]
+    # while runs < 5:
+    for i, data in enumerate(seed_dataset):
         tries = 0
         evolvable_questions = []
-        while tries <= 4:
-            if len(evolvable_questions) == 0:
-                syn_qars_details = generate_qars(generator_mllms, slm, data["image"])
-            else:
-                #TODO: evolve questions and answer them using 'evolve_qars'
-                pass
-            syn_qars_details = judge_qars(judge_mllm, slm, data["image"], syn_qars_details)
-            syn_qars_details = verify_inference(br_mllm, slm, data["image"], syn_qars_details)
+        #while tries <= 4:
+        if len(evolvable_questions) == 0:
+            syn_qars_details = generate_qars(generator_mllms, slm, data["image"], data)
+        else:
+            #TODO: evolve questions and answer them using 'evolve_qars'
+            pass
+        
+        #syn_qars_details = judge_qars(judge_mllm, slm, data["image"], syn_qars_details)
+        #syn_qars_details = verify_inference(br_mllm, slm, data["image"], syn_qars_details)
 
-            # Filter out qars that do not pass inference verifier
-            syn_qar_bucket = []
-            for mllm in syn_qars_details:
-                for qar in syn_qars_details[mllm]:
-                    if (syn_qars_details[mllm][qar]["br_score"] > 0.7):
-                        syn_qar_bucket.append(syn_qars_details[mllm][qar])
+        # Filter out qars that do not pass inference verifier
+        syn_qar_bucket = []
+        for mllm in syn_qars_details:
+            for qar in syn_qars_details[mllm]:
+                #if (syn_qars_details[mllm][qar]["br_score"] > 0.7):
+                syn_qar_bucket.append(syn_qars_details[mllm][qar])
 
-            # De-duplicate initially filtered qars
-            unique_qars = deduplicate_qars(syn_qar_bucket)
+        # De-duplicate initially filtered qars
+        unique_qars = deduplicate_qars(syn_qar_bucket)
 
-            syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
+        synthetic_qars.extend(unique_qars)
+
+        """
+        syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
             
             
-            # TODO: Move to 'steps' file
-            evolvable_questions = []
-            for syn_qar in syn_qars_with_evol:
-                if syn_qar["judgement_details"]["total_score"] >= 80:
-                    # TODO choices = generate_options(slm, question, answer)
-                    synthetic_qars.append({
-                        "id": data["id"],
-                        "image": data["image"],
-                        "question": syn_qar["question"],
-                        "direct_answer": syn_qar["answer"],
-                        "choices": choices
-                    })
-                else:
-                    evolvable_questions.append((syn_qar["question"], syn_qar["judgement_details"]["evolution_method"]))
-
-            if len(evolvable_questions) == 0:
-                break
+        # TODO: Move to 'steps' file
+        evolvable_questions = []
+        for syn_qar in syn_qars_with_evol:
+            if syn_qar["judgement_details"]["total_score"] >= 80:
+                # TODO choices = generate_options(slm, question, answer)
+                synthetic_qars.append({
+                    "id": data["id"],
+                    "image": data["image"],
+                    "question": syn_qar["question"],
+                    "direct_answer": syn_qar["answer"],
+                    "choices": choices
+                })
             else:
-                tries += 1
+                evolvable_questions.append((syn_qar["question"], syn_qar["judgement_details"]["evolution_method"]))
+
+        if len(evolvable_questions) == 0:
+            break
+        else:
+            tries += 1
+        """
+        if i >= 50:
+            break
 
     # TODO: store in huggingface or as json file
-"""
             
 
-
+"""
 # TODO: Later, make parallel inference calls (as possible)
 def generate_qars(dataset, generator_models, judge_model, br_model):
     image_data = load_and_preprocess_dataset(dataset)
@@ -108,10 +116,6 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     with open("judge_llava_critic_generator_molmo.json", "w") as file:
         json.dump(judged_syn_qars, file, indent=4)
 
-
-    
-
-    """
     image_ids = []
     for syn_qar in sample_syn_qars:
         image_ids.append(syn_qar["serial"])
@@ -181,7 +185,6 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     #TODO: Apply dedup again on final synthetic dataset
 
     #TODO: Store in huggingface
-    """
-
+"""
 
      
