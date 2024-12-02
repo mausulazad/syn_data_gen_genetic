@@ -5,6 +5,7 @@ import json
 import torch
 from PIL import Image
 from typing import Dict
+import io
 
 import ast
 import sys
@@ -22,6 +23,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
+from huggingface_hub import HfApi
+
 #from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 
 # LLava-Critic
@@ -32,7 +35,7 @@ from llava.conversation import conv_templates, SeparatorStyle
 
 from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from models import MLLM, Judge, BackwardReasoner, FinalJudge
 
 CRITERIA = [
@@ -626,8 +629,19 @@ def load_json_file(file_name):
         data = json.load(json_file)
     return data
 
-def convert_to_hf_dataset(qars):
-    pass
+def convert_and_upload_to_hf(qars, repo_name):
+    api = HfApi()
+    user_name = api.whoami()["name"]
+
+    formatted_qars = {key: [qar[key] for qar in qars] for key in qars[0]}
+    dataset = Dataset.from_dict(formatted_qars)
+    
+    repo_id=f"{user_name}/{repo_name}"
+    api.create_repo(repo_id=repo_id)
+    dataset.push_to_hub(repo_id)
+    print(f"Dataset is loaded to repo: {repo_id}")
+    
+    return
 
 """
     for i, qar_text in enumerate(qar_texts):
