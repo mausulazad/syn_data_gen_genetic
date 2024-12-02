@@ -17,9 +17,9 @@ from steps import generate_qars, judge_qars, verify_inference, deduplicate_qars,
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
-    #slm = setup_slm()
-    #generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
-    #inal_judge = setup_final_judge()
+    slm = setup_slm()
+    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    #final_judge = setup_final_judge()
 
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
@@ -30,8 +30,8 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
 
     #TODO: append object with options and image id
     synthetic_qars = []
-    slm = None
-    generator_mllms = ["molmo", "llama_32", "llava_32"]
+    #slm = None
+    #generator_mllms = ["molmo", "llama_32", "llava_32"]
     # while runs < 5:
     for i, data in enumerate(seed_dataset):
         tries = 0
@@ -85,11 +85,11 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         if i % 20 == 0:
             print(f"QAR for {i} images are generated")
         
-        if i >= 700:
+        if i >= 250:
             break
 
     # Store in huggingface repo
-    repo_name = "syn_dataset_no_evolution_single_run"
+    repo_name = "syn_dataset_no_evolution_single_run_smol"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
             
 

@@ -13,7 +13,6 @@ def generate_qars(generator_mllms, slm, image, image_details):
     new_fields = {"image": image_details["image"], "original_question_id": image_details["question_id"]}
     syn_qars_details = {}
     for i, mllm in enumerate(generator_mllms):
-        """
         questions = mllm.generate(image, use_evol_prompt=False, questions=None, evolvable_questions=[])
         syn_qars = mllm.generate(image, use_evol_prompt=False, questions=questions, evolvable_questions=[])
         syn_qars = postprocess_qars(slm, syn_qars)
@@ -22,25 +21,6 @@ def generate_qars(generator_mllms, slm, image, image_details):
         except json.JSONDecodeError:
             print(f'Error: Could not parse syn_qars moving to next mllm.')
             continue
-        """
-
-        syn_qars = [
-            {
-                'question': 'What is the animal depicted in the image?', 
-                'answer': 'A rabbit', 
-                'rationale': 'The animal has long ears, large eyes, and a fluffy tail, which are characteristic features of a rabbit.'
-            }, 
-            {
-                'question': 'Where is the rabbit standing?', 
-                'answer': 'On a dirt path', 
-                'rationale': 'The rabbit is standing on a dirt path that runs through a grassy field, with flowers and trees on either side.'
-            }, 
-            {
-                'question': 'What is the rabbit wearing?', 
-                'answer': 'A blue coat', 
-                'rationale': 'The rabbit is wearing a blue coat with a brown vest and tan pants, which suggests a formal or semi-formal outfit.'
-            }
-        ]
 
         syn_qars = [
             {**qar, 'rationales': [qar['rationale']], 'rationale': None} for qar in syn_qars
