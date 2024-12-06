@@ -85,7 +85,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         if i % 20 == 0:
             print(f"QAR for {i} images are generated")
         
-        if i >= 250:
+        if i >= 50:
             break
 
     # Store in huggingface repo
