@@ -1,9 +1,9 @@
 import json
 
 import hashlib
-from fuzzywuzzy import fuzz
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+#from fuzzywuzzy import fuzz
+#from sklearn.feature_extraction.text import TfidfVectorizer
+#from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 from utils import postprocess_qars, postprocess_judgement_details
