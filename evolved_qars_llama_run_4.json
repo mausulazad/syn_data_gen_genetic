@@ -1,0 +1,1392 @@
+[
+    {
+        "serial": 0,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What season is it?",
+                    "answer": "Summer.",
+                    "rationales": [
+                        "The man is wearing a light-colored shirt with rolled-up sleeves and light blue jeans, which are more suitable for warm weather. The trees and grass in the image appear to be lush and green, indicating a season with ample rainfall and temperatures that allow for growth."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Can the man carry more suitcases?",
+                    "answer": "No.",
+                    "rationales": [
+                        "The man is already carrying two suitcases, one in each hand, and is pulling another behind him. It seems that he is already at his luggage carrying capacity."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What type of luggage is the man holding?",
+                    "answer": "Black leather and brown trim luggage.",
+                    "rationales": [
+                        "The man is holding a black suitcase with brown trim, as well as a brown bag, which appears to be made of leather. The material and color of the luggage suggest a higher-end or more durable type of luggage."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 1,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is he pointing at?",
+                    "answer": "A pizza",
+                    "rationales": [
+                        "The image shows a man holding a paper plate with a piece of pizza on it."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Why is he pointing at a pizza?",
+                    "answer": "It appears to be his lunch",
+                    "rationales": [
+                        "He is holding a plate with the food and is in an office setting, which could indicate that it is his meal."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 2,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "When might the sheep gather at the tractor for food?",
+                    "answer": "During feeding.",
+                    "rationales": [
+                        "The image shows a field with sheep and a tractor, suggesting the sheep gather for food during the tractor's feeding operation."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What activity are the sheep doing as the tractor drives by?",
+                    "answer": "Grazing.",
+                    "rationales": [
+                        "The sheep appear to be eating grass, indicating they are grazing."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What would be the sheep's reaction if the tractor started honking?",
+                    "answer": "Panic.",
+                    "rationales": [
+                        "The sheep seem to be focused on grazing and would likely panic if the sudden noise startled them.."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 4,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What time of day is most likely depicted in the image?",
+                    "answer": "Afternoon.",
+                    "rationales": [
+                        "The shadows in the image suggest a mid-to-late afternoon."
+                    ]
+                },
+                "qar_2": {
+                    "question": "If the person dropped the object they are holding, the motorcycle could be damaged. What might happen if the person dropped the object?",
+                    "answer": "It is possible that the motorcycle could be damaged.",
+                    "rationales": [
+                        "If the person dropped the object, it is possible that the motorcycle could be damaged, but the exact outcome depends on the object and the circumstances of the drop."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 5,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the material of the briefcase?",
+                    "answer": "Leather",
+                    "rationales": [
+                        "The image shows a man wearing a long coat with a leather briefcase, and the texture and color of the briefcase resemble leather."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What type of lock is on the case?",
+                    "answer": "None",
+                    "rationales": [
+                        "There is no visible lock on the briefcase in the image."
+                    ]
+                },
+                "qar_3": {
+                    "question": "How many pockets or compartments does it have?",
+                    "answer": "Multiple",
+                    "rationales": [
+                        "The briefcase appears to have multiple pockets and compartments, as indicated by the visible zippers and stitching."
+                    ]
+                },
+                "qar_4": {
+                    "question": "What objects can you see inside the briefcase?",
+                    "answer": "Papers and a laptop",
+                    "rationales": [
+                        "The image shows a laptop and papers visible inside the open briefcase."
+                    ]
+                },
+                "qar_5": {
+                    "question": "What color are the papers or documents?",
+                    "answer": "White",
+                    "rationales": [
+                        "The papers or documents inside the briefcase appear to be white."
+                    ]
+                },
+                "qar_6": {
+                    "question": "Are they neatly organized or crumpled?",
+                    "answer": "Neatly organized",
+                    "rationales": [
+                        "The papers or documents inside the briefcase are neatly organized, suggesting they have been folded or stacked carefully."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 6,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What time of day can be inferred from the man's shadow in the image?",
+                    "answer": "Afternoon.",
+                    "rationales": [
+                        "The man's shadow extends in a direction opposite to the sun, indicating that the sun is low in the sky, likely near sunset or early morning. However, considering the lighting and the man's attire, it appears to be in the afternoon."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What might happen to the cows if the man accidentally drops the object he's holding?",
+                    "answer": "The cows might get scared or startled.",
+                    "rationales": [
+                        "The man is holding a bucket of feed, and if he accidentally drops it, the noise or sudden movement could startle the cows, causing them to react or move away from the area."
+                    ]
+                },
+                "qar_3": {
+                    "question": "How might the man interact with the cows around him?",
+                    "answer": "He might feed them.",
+                    "rationales": [
+                        "The man is sitting in a field with a bucket of feed and cows nearby, suggesting that he is likely there to."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 7,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What are the people holding umbrellas for?",
+                    "answer": "To stay dry.",
+                    "rationales": [
+                        "The image shows people in a rainy environment holding umbrellas, indicating they are trying to stay dry."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Why are the people holding umbrellas in a rainy area?",
+                    "answer": "Rain is falling.",
+                    "rationales": [
+                        "The image depicts rain falling from the sky, suggesting the need for umbrellas to shield from the rain."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What does the person on the right wear?",
+                    "answer": "Jeans.",
+                    "rationales": [
+                        "The person on the right is shown wearing jeans as part of their clothing."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 8,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "Is the bus driver wearing a seatbelt?",
+                    "answer": "No",
+                    "rationales": [
+                        "The image shows a close-up of the bus's driver area, and no seatbelt is visible on the driver, who is reaching up to attach the red ribbon to the top of the bus."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the event the ribbon signifies?",
+                    "answer": "A celebration of the bus's start of service",
+                    "rationales": [
+                        "The image shows a bus with a ribbon being attached at the front of the bus and the driver's side, suggesting a celebration marking the beginning of the bus's service, a common tradition in transportation."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 9,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What hour of day based on vehicles and sun?",
+                    "answer": "The image suggests it is daytime, possibly early morning or late afternoon, based on the position of the sun and the presence of vehicles.",
+                    "rationales": [
+                        "The image shows vehicles on the street, which is more common during daytime hours. Additionally, the sun appears to be shining from the right side of the image, indicating it is daytime."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the impact on traffic if the bicycle is dropped?",
+                    "answer": "The impact on traffic would likely be minimal, as the bicycle is not obstructing the flow of traffic.",
+                    "rationales": [
+                        "The image shows the bicycle is being ridden in a separate lane or on the sidewalk, which is not blocking."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 10,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "Are the bicycles a tourist attraction?",
+                    "answer": "No",
+                    "rationales": [
+                        "The bicycles appear to be in a state of disrepair, which does not suggest that they are intended for tourists to view or use."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Are the bicycles on display for sale?",
+                    "answer": "No",
+                    "rationales": [
+                        "There are no signs of sales or marketing efforts around the bicycles, and they do not appear to be arranged in a way that would suggest they are on display for sale."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Are the bicycles part of a sports event?",
+                    "answer": "Unlikely",
+                    "rationales": [
+                        "While it is possible that the bicycles could be part of a sports event, there is no evidence in the image to suggest that this is the case. The bicycles appear to be in disrepair, which makes it unlikely that they would be used in a competitive event."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 11,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What type of bread is used?",
+                    "answer": "French bread",
+                    "rationales": [
+                        "The visible cut side of the sandwich shows the inside of a baguette with an oblong section, indicating that French bread was used to make the sandwiches in this image."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What kind of fillings are visible?",
+                    "answer": "Tomato and lettuce",
+                    "rationales": [
+                        "The image shows tomato slices and lettuce leaves in the filling of one of the sandwiches."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What additional ingredients are present?",
+                    "answer": "Meat",
+                    "rationales": [
+                        "A glimpse of meat is visible in the other sandwich, suggesting it is used as a filling."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 12,
+        "syn_qars": {}
+    },
+    {
+        "serial": 13,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "Is it early morning based on shadow length?",
+                    "answer": "No",
+                    "rationales": [
+                        "The shadows in the image are not long, indicating that it is not early morning."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Is there at least one car and one building in the image?",
+                    "answer": "Yes",
+                    "rationales": [
+                        "There are several cars and buildings visible in the image."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Can you find the word 'theater' on the image?",
+                    "answer": "Yes",
+                    "rationales": [
+                        "The word \u201ctheater\u201d is written on the front of the building in the image."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 15,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What flavors are in the cake?",
+                    "answer": "Carrot and cream cheese.",
+                    "rationales": [
+                        "The cake is brown, with a cream-colored frosting and a slice of carrot on top."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Why does the cake look so soft?",
+                    "answer": "It is moist, possibly because of the carrot ingredients.",
+                    "rationales": [
+                        "The cake looks moist and fluffy, and the color suggests it has a high sugar content."
+                    ]
+                },
+                "qar_3": {
+                    "question": "How is the cake textured?",
+                    "answer": "It looks dense but fluffy.",
+                    "rationales": [
+                        "The image suggests a light but rich texture."
+                    ]
+                },
+                "qar_4": {
+                    "question": "What is the cake made of?",
+                    "answer": "The cake is a carrot cake with cream cheese frosting.",
+                    "rationales": [
+                        "The cake is brown, with a cream-colored frosting, and a slice of carrot on top, suggesting carrot cake with cream cheese frosting."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 16,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "Is the woman using the Nunchuk?",
+                    "answer": "Yes",
+                    "rationales": [
+                        "The woman is holding both the Wii Remote and the Nunchuk, which are connected by a cord."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Is the woman wearing headphones?",
+                    "answer": "No",
+                    "rationales": [
+                        "There are no headphones visible in the image."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What game are they playing on the Wii?",
+                    "answer": "It is not possible to determine the specific game being played based on this image alone.",
+                    "rationales": [
+                        "The image does not provide enough information to identify the game, but it appears to be a sports game."
+                    ]
+                },
+                "qar_4": {
+                    "question": "How long has she been playing?",
+                    "answer": "It is not possible to determine how long the woman has been playing based on this image alone.",
+                    "rationales": [
+                        "The image does not provide any information about the duration of playtime."
+                    ]
+                },
+                "qar_5": {
+                    "question": "What is the room where they are playing?",
+                    "answer": "The room appears to be a living room or family room.",
+                    "rationales": [
+                        "The image shows a couch and a coffee table, which are common pieces of furniture found in living rooms or family rooms."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 17,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the significance of the flags on the building when considering the event depicted in the image?",
+                    "answer": "National pride and patriotism.",
+                    "rationales": [
+                        "The presence of multiple flags on the building suggests a significant event or celebration, and the American flag is prominently displayed, indicating a sense of national pride and patriotism. The image depicts a formal procession, and the flags flying add to the festive atmosphere."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Why are the flags flying during this formal procession?",
+                    "answer": "They are being flown to signify the importance and prestige of the event.",
+                    "rationales": [
+                        "The flags are being flown during the procession to show respect and pride for the occasion, and to indicate the significance of the event to the participants and spectators. The image shows a formal and dignified atmosphere, with the flags adding to the sense of occasion."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What type of gathering is this, and is it a parade or a formal event?",
+                    "answer": "It appears to be a formal event, possibly a ceremony or a commemoration.",
+                    "rationales": [
+                        "The image depicts a formal procession, with people dressed in suits and ties, and the flags being flown. The atmosphere is dignified and respectful, suggesting a formal event rather than a parade. The presence of the flags and the formal attire of the participants support this interpretation."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 18,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the significance of the baseball bat in the game context?",
+                    "answer": "It is a crucial tool for hitting the ball, allowing the player to score runs and advance the team.",
+                    "rationales": [
+                        "In the image, the baseball bat is prominently displayed, suggesting its importance in the game. The player's stance and grip on the bat indicate that they are ready to swing at the ball, highlighting the bat's role in this context."
+                    ]
+                },
+                "qar_2": {
+                    "question": "How might the player's performance affect the team's morale and strategy in the game context?",
+                    "answer": "A strong performance by the player can boost team morale and influence strategic decisions, such as whether to focus on offense or defense.",
+                    "rationales": [
+                        "The image shows the player in a focused stance, implying that their performance is crucial to the team's success. This suggests that the player's actions can impact the team's morale and strategy."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What specific responsibilities does the catcher have in this situation?",
+                    "answer": "The catcher is responsible for receiving the pitch and signaling the base runners to advance or remain stationary.",
+                    "rationales": [
+                        "In the image, the catcher is positioned behind home plate, indicating their role in receiving the pitch. Their body language and attention to the ball suggest that they are focused on catching the pitch and signaling the base runners."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 19,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the purpose of the grill in the image?",
+                    "answer": "Cooking meat for the gathering.",
+                    "rationales": [
+                        "The grill is the only cooking surface visible in the image, and the meat on the grill appears to be cooked to various degrees, suggesting it is being prepared for consumption by the people gathered around the grill."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 20,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the shark model used for?",
+                    "answer": "Educational",
+                    "rationales": [
+                        "The shark model appears to be an educational tool, likely used to teach children about marine life and the ocean ecosystem."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the potential purpose of the shark model?",
+                    "answer": "Teaching",
+                    "rationales": [
+                        "The shark model's design and size suggest it is intended for educational use, such as teaching children about marine life or the importance of conservation."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What can the shark model be used for?",
+                    "answer": "Educational or presentation purposes",
+                    "rationales": [
+                        "The shark model appears to be a decorative piece, but its presence in an office setting suggests it may be used for educational or presentation purposes."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 21,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What might be the reason for people's reactions to the train on the tracks?",
+                    "answer": "The train is long.",
+                    "rationales": [
+                        "It appears in the image that the train's length is the reason for people's reactions, as one would expect them to react in an attempt to protect their children from the approaching train."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 22,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "I cannot provide an answer to this question, as it is not appropriate to provide information or guidance on illegal or harmful activities.",
+                    "answer": "",
+                    "rationales": [
+                        "The question is not relevant to the topic and does not align with the guidelines for providing information or guidance."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 24,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "Is the clock related to the people's activities?",
+                    "answer": "No.",
+                    "rationales": [
+                        "The people seem to be walking on the sidewalk, and the clock does not appear to be affecting their behavior."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the purpose of the large clock in the middle of the square?",
+                    "answer": "The purpose is for people to tell time.",
+                    "rationales": [
+                        "The clock is prominently placed in the square, suggesting it is intended for people to use for timekeeping."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What is the significance of the time on the clock in relation to the building's architecture?",
+                    "answer": "The time on the clock is 3:40, and the building in the background is likely a public landmark or historical site.",
+                    "rationales": [
+                        "The clock's time and the building's architecture suggest that the building is a significant part of the city's history or culture."
+                    ]
+                },
+                "qar_4": {
+                    "question": "Does the time on the clock indicate a specific event or schedule in the area?",
+                    "answer": "No.",
+                    "rationales": [
+                        "The time on the clock (3:40) does not appear to be related to a specific event or schedule in the area, as it is a typical weekday time and does not seem to match any notable events or schedules in the image."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 25,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What does the cat's expression convey about its current mood or behavior?",
+                    "answer": "The cat's relaxed expression suggests that it is feeling calm and content.",
+                    "rationales": [
+                        "The cat's relaxed expression suggests that it is feeling calm and content. The fact that it is sitting on the dashboard and appears to be looking out the window implies that it is enjoying the view and the fresh air."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What does the driver's reaction to the cat's presence suggest about their feelings or attitude?",
+                    "answer": "The driver may be tolerant or even amused by the cat's presence.",
+                    "rationales": [
+                        "Since the driver is not visible in the image, it is difficult to infer their exact reaction. However, the fact that the cat is sitting on the dashboard and the driver has not yet removed it suggests that the driver may be tolerant or even amused by the cat's presence."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What are the potential safety risks or challenges that the cat's presence in the car might pose, and how could they be mitigated?",
+                    "answer": "The cat's presence in the car could pose a distraction to the driver, particularly if the cat starts to move around.",
+                    "rationales": [
+                        "The cat's presence in the car could pose a distraction to the driver, particularly if the cat starts to move around. This could potentially lead to accidents or other safety issues."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 26,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What type of training does the man require?",
+                    "answer": "Surfing",
+                    "rationales": [
+                        "The man is in a wetsuit, which is typically worn for surfing, and he is riding a wave, which is also a characteristic of surfing."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What does the man practice to perform tricks?",
+                    "answer": "Surfing",
+                    "rationales": [
+                        "The man is in a wetsuit and riding a wave, which is a key component of surfing. He is also practicing his balance and technique to perform tricks on the wave."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Why is the man wearing a wetsuit?",
+                    "answer": "To stay warm and dry while surfing",
+                    "rationales": [
+                        "The man is riding a wave in a wave pool, which means he will be in cold water for an extended period. The wetsuit helps him stay warm and dry, allowing him to focus on his surfing skills."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 27,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What message is the management trying to convey through the signs?",
+                    "answer": "The management is trying to destroy our airline.",
+                    "rationales": [
+                        "The signs in the image read \"Management is destroying our airline\" and \"What's a pilot worth?\" which suggests that the management is trying to convey a message of negative impact on the airline and the value of pilots."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What social issues do the signs highlight?",
+                    "answer": "Labor dispute, airline industry challenges.",
+                    "rationales": [
+                        "The signs in the image highlight the signs of a labor dispute, as pilots are protesting against the management's actions, and the signs also mention the challenges facing the airline industry."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 28,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What color is the dog's fur?",
+                    "answer": "White.",
+                    "rationales": [
+                        "The dog's fur is all white, with no visible colors."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the color of the dog's fur in a certain cultural context?",
+                    "answer": "White.",
+                    "rationales": [
+                        "In many cultures, white is considered a symbol of purity and innocence. In this context, the dog's white fur may represent these qualities."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What color is the dog's fur, given its breed?",
+                    "answer": "White.",
+                    "rationales": [
+                        "Based on the dog's appearance and breed, it is likely a terrier mix. Terriers are often white or have white markings, so it is likely that the dog's fur is white."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 29,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "When is it daytime in the image?",
+                    "answer": "It is daytime.",
+                    "rationales": [
+                        "The street is well lit and the sky is bright."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What will happen if the parking meter fails?",
+                    "answer": "You will not be able to pay for parking.",
+                    "rationales": [
+                        "The parking meter is likely used to pay for parking and if it fails, you will not be able to pay."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 30,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the purpose of the baseball glove in the image?",
+                    "answer": "Pitching.",
+                    "rationales": [
+                        "The man in the image is wearing a baseball glove on his left hand and is pitching the ball on the mound of a baseball field."
+                    ]
+                },
+                "qar_2": {
+                    "question": "How does the baseball glove affect the game in specific scenarios, such as when catching or throwing, for different types of players?",
+                    "answer": "The baseball glove helps players to catch and throw the ball more effectively. It provides protection for the hand and enhances the grip on the ball.",
+                    "rationales": [
+                        "The glove is being used by the player to pitch the ball, indicating that it is designed for that specific purpose. Additionally, the glove would also be useful for catching and throwing the ball."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Outside of baseball games, does the baseball glove play a role?",
+                    "answer": "No, the baseball glove is primarily used for baseball games and is not typically used in other situations.",
+                    "rationales": [
+                        "The image depicts a baseball field and the man is pitching, which suggests that the glove is specifically designed for baseball games. It is unlikely to be used in other situations."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 31,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What time of day is it based on the sunlight?",
+                    "answer": "Daytime",
+                    "rationales": [
+                        "The image shows the sun shining brightly, indicating that it is daytime."
+                    ]
+                },
+                "qar_2": {
+                    "question": "How many people are walking in the direction of the traffic light?",
+                    "answer": "At least 3",
+                    "rationales": [
+                        "In the image, at least 3 people are walking in the direction of the traffic light."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What is the man in the green shirt carrying on the left side?",
+                    "answer": "A bag",
+                    "rationales": [
+                        "The man in the green shirt appears to be carrying a bag on his left side."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 32,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the purpose of the Capital Group bus stop in the image?",
+                    "answer": "To transport people",
+                    "rationales": [
+                        "The bus stop depicted in the image appears to be a designated waiting area for public transportation, serving as a point of embarkation and disembarkation for passengers."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Why is the bus number 9 significant?",
+                    "answer": "It is likely a public transportation vehicle",
+                    "rationales": [
+                        "The number 9 is prominently displayed on the back of the bus, suggesting that it is indeed a bus, given its context as a mode of public transportation."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What route number is the bus on?",
+                    "answer": "Bus route number 9 is indicated",
+                    "rationales": [
+                        "The bus stop sign displays a number 9, which likely corresponds to the route number the bus is operating on, given the context of the image."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 33,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the weather like in the image?",
+                    "answer": "Rainy.",
+                    "rationales": [
+                        "The image shows people walking with umbrellas, indicating rain."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Is the weather too cold for someone to be wearing a jacket?",
+                    "answer": "Yes.",
+                    "rationales": [
+                        "People in the image are wearing jackets, suggesting the weather is cold."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What is the purpose of the yellow taxi cab in the image?",
+                    "answer": "Transportation.",
+                    "rationales": [
+                        "The taxi cab is present in a city setting, indicating its purpose is to transport people."
+                    ]
+                },
+                "qar_4": {
+                    "question": "What is the color of the taxi cab in the image?",
+                    "answer": "Yellow.",
+                    "rationales": [
+                        "The image shows a yellow vehicle with the word \"TAXI\" on it, indicating its color."
+                    ]
+                },
+                "qar_5": {
+                    "question": "What are the people in the image doing?",
+                    "answer": "Walking.",
+                    "rationales": [
+                        "The image shows people moving forward, indicating they are walking."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 34,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What time of day does the surfboard suggest",
+                    "answer": "The image depicts a daytime setting, as indicated by the bright light and shadows. The surfboard, carried by the person, is likely being transported to or from a surfing session, which is typically conducted during daylight hours.",
+                    "rationales": [
+                        "The image's brightness and the presence of a person carrying a surfboard during what appears to be daytime hours suggest a daytime scenario."
+                    ]
+                },
+                "qar_2": {
+                    "question": "The weather condition is sunny",
+                    "answer": "The weather is sunny, as evidenced by the bright light and the fact that there is no shade or cloud cover in the image. The presence of the surfboard further supports this, as it is often used on sunny days.",
+                    "rationales": [
+                        "The image shows a clear sky and no clouds, indicating sunny weather."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What type of damage would occur if the person dropped the surfboard",
+                    "answer": "If the person dropped the surfboard, the primary concern would be the potential damage to the board itself. The surfboard could suffer scratches, dings, or other forms of impact damage, depending on the surface it lands on. Additionally, there's a risk of injury to the person holding the board.",
+                    "rationales": [
+                        "The surfboard is a fragile item that could be damaged if dropped, and the person holding it could potentially be injured in the process."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 35,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the dog doing?",
+                    "answer": "it is lying down.",
+                    "rationales": [
+                        "The image shows the dog lying down on a grassy area."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the person carrying?",
+                    "answer": "an umbrella.",
+                    "rationales": [
+                        "The image shows the person holding the umbrella in their hand."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Is the weather sunny?",
+                    "answer": "No, it is raining.",
+                    "rationales": [
+                        "The image shows the person wearing a red jacket and holding an umbrella, indicating that it is raining.."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 36,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the most prominent thing on the table?",
+                    "answer": "A pizza",
+                    "rationales": [
+                        "The image shows a large pizza as the central object on the table."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the woman doing?",
+                    "answer": "Looking at the pizza",
+                    "rationales": [
+                        "The woman's eyes are directed towards the pizza, indicating her focus on it."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What is the woman eating?",
+                    "answer": "The woman has not started eating the pizza",
+                    "rationales": [
+                        "The woman has not taken a bite of the pizza yet, as indicated by the untouched food on the table."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 37,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the event depicted in the image?",
+                    "answer": "Motorcycles",
+                    "rationales": [
+                        "The image shows a group of people riding motorcycles, with multiple motorcycles in view. This suggests a motorcycle event or gathering."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the primary attire of the event?",
+                    "answer": "Casual and protective",
+                    "rationales": [
+                        "The people in the image are wearing casual clothing and helmets, indicating a relaxed and potentially safety-oriented event."
+                    ]
+                },
+                "qar_3": {
+                    "question": "How many people are wearing yellow clothing?",
+                    "answer": "At least three",
+                    "rationales": [
+                        "The image shows at least three people wearing yellow clothing, although the exact number might be higher due to the distance and angles of the photograph."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 38,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the woman's favorite pizza topping?",
+                    "answer": "She is eating a slice of a pizza topped with olives, tomatoes, and what appears to be a meat topping, but it is not clear what type of meat.",
+                    "rationales": [
+                        "Although we can't see the woman's expression, the type of toppings suggests her favorite type of pizza topping is likely olives or tomatoes."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Does she eat her pizza with one hand or two?",
+                    "answer": "Two.",
+                    "rationales": [
+                        "The image clearly shows the woman holding the pizza slice with both hands, suggesting she is using two hands to eat."
+                    ]
+                },
+                "qar_3": {
+                    "question": "How many people are enjoying pizza at the table?",
+                    "answer": "Two.",
+                    "rationales": [
+                        "There are only two people sitting at the table, both eating pizza slices."
+                    ]
+                },
+                "qar_4": {
+                    "question": "What does the woman have on her right wrist?",
+                    "answer": "A bracelet.",
+                    "rationales": [
+                        "It is clearly visible that the woman is wearing a bracelet on her right wrist."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 39,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the person interacting with the dogs?",
+                    "answer": "For affection/companionship.",
+                    "rationales": [
+                        "The person is petting the dogs, indicating a desire for companionship or affection."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 40,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What context suggests the use of the tusks?",
+                    "answer": "The tusks are used for defense.",
+                    "rationales": [
+                        "Elephants use their tusks to defend themselves against predators or rival elephants."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What does the tusks suggest about the elephants' environment?",
+                    "answer": "The tusks are adapted for their environment.",
+                    "rationales": [
+                        "The large size of the tusks indicates that the elephants have access to sufficient food and resources to sustain their growth, suggesting a suitable environment."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What kind of enclosure might be suitable for the elephants?",
+                    "answer": "A naturalistic enclosure.",
+                    "rationales": [
+                        "Elephants are wild animals and require space to roam and engage in natural behaviors, making a naturalistic enclosure with ample space suitable for them."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 41,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the truck's primary function during rush hour?",
+                    "answer": "Snow removal",
+                    "rationales": [
+                        "The image shows a snowplow truck, which is designed to remove snow from roads and other surfaces, making it an essential vehicle during rush hour when roads are often congested and slippery."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What does the traffic light imply about road safety?",
+                    "answer": "Caution and slowing down",
+                    "rationales": [
+                        "The traffic light is red, indicating that drivers should come to a complete stop before proceeding. This implies that the road safety is a priority, and drivers are expected to exercise caution and slow down to avoid accidents."
+                    ]
+                },
+                "qar_3": {
+                    "question": "How might the truck's specific features affect traffic flow?",
+                    "answer": "Reduced speed and increased congestion",
+                    "rationales": [
+                        "The snowplow truck's features, such as the plow blade and large tires, are designed for clearing snow, but they may reduce the truck's speed and increase its size, making it more difficult to maneuver and potentially causing congestion on the road."
+                    ]
+                },
+                "qar_4": {
+                    "question": "What is the truck's intended use during snowy weather?",
+                    "answer": "Snowplowing",
+                    "rationales": [
+                        "The image shows a snowplow truck, which is specifically designed to clear snow from roads and other surfaces, making it an essential vehicle during snowy weather."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 42,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What does the child in the background have in his hand?",
+                    "answer": "The child appears to have a tennis ball.",
+                    "rationales": [
+                        "The child is in a tennis court and the object in their hand is the same color and shape as the ball seen in the foreground."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the child wearing?",
+                    "answer": "The child is wearing a white and light blue shirt, light blue shorts, white socks and sneakers.",
+                    "rationales": [
+                        "The child is wearing sportswear, which is typical for the sport of tennis."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Is the man with the child a coach?",
+                    "answer": "Yes, he seems to be coaching the child.",
+                    "rationales": [
+                        "The man is standing in the same space as the child, the child seems to be looking to the man for guidance, and the man is dressed for the sport of tennis and appears to be instructing the child."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 43,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What season is indicated by the number of passengers on the bus?",
+                    "answer": "Summer.",
+                    "rationales": [
+                        "The bus is full of passengers, which suggests that people are traveling during the summer months when they are on vacation."
+                    ]
+                },
+                "qar_2": {
+                    "question": "Is the bicycle silver or green?",
+                    "answer": "Silver.",
+                    "rationales": [
+                        "The bicycle is attached to the front of the bus, and the bike carrier is silver, which matches the color of the bicycle."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 45,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the purpose of the steam coming from the bus?",
+                    "answer": "Venting",
+                    "rationales": [
+                        "The steam is coming from the bus, likely a natural consequence of the engine's operation or a safety measure to prevent the buildup of harmful gases."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What event is the crowd on the sidewalk attending?",
+                    "answer": "Likely a protest or rally",
+                    "rationales": [
+                        "The presence of a crowd and the signs displayed suggest an event of public interest or cause, possibly a protest or rally."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Why is the woman crossing the street looking back?",
+                    "answer": "Checking traffic",
+                    "rationales": [
+                        "The woman is crossing the street, and looking back is a common behavior to ensure safety from oncoming traffic or potential hazards."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 46,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What specific indicators suggest a real emergency?",
+                    "answer": "The semi-truck is blocking the road and there is fire, and firemen at the scene.",
+                    "rationales": [
+                        "The image shows a large truck blocking a road and fire, along with firemen, indicating a potential emergency."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What clues in the image suggest a training exercise?",
+                    "answer": "The firetruck has \"Operation 100 News\" written on the road, suggesting a planned event.",
+                    "rationales": [
+                        "The image includes text referencing \"Operation 100 News\" in the road, implying a controlled training exercise."
+                    ]
+                },
+                "qar_3": {
+                    "question": "When was the firetruck likely dispatched to the scene?",
+                    "answer": "It is unclear when the firetruck was dispatched, but the fire appears to be relatively new.",
+                    "rationales": [
+                        "The image shows a recent fire and firemen at the scene, suggesting a recent incident, but the exact timing is unclear."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 47,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What types of media can be accessed through the 'Entertainment' option?",
+                    "answer": "TV",
+                    "rationales": [
+                        "The image shows a Sony Ericsson phone with the 'Entertainment' option. Sony Ericsson is a well-known brand in the mobile phone market, and it is reasonable to assume that their phones come with entertainment features like TV access."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What specific content is displayed on the phone screen?",
+                    "answer": "Sky",
+                    "rationales": [
+                        "The image shows the phone screen displaying the 'Sky' logo and menu options, indicating that the phone is connected to the Sky service, which offers various forms of entertainment media."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What are some potential benefits of having a 'Sports' option on a phone?",
+                    "answer": "Access to live sports events",
+                    "rationales": [
+                        "The image shows the 'Sky' logo and menu options, suggesting that the phone has access to live sports events through the Sky service, allowing users to stay up-to-date with their favorite sports teams and players.."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 48,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the purpose of the image?",
+                    "answer": "To capture a moment of action during a soccer game.",
+                    "rationales": [
+                        "The image captures a dynamic moment in a soccer game, with players in action and the ball flying through the air."
+                    ]
+                },
+                "qar_2": {
+                    "question": "How many players are in the image?",
+                    "answer": "There are five players in the image.",
+                    "rationales": [
+                        "There are three players wearing white shirts, and two players wearing red shirts."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What are the players wearing?",
+                    "answer": "The players are wearing white and red shirts.",
+                    "rationales": [
+                        "Three players are wearing white shirts, and two players are wearing red shirts."
+                    ]
+                },
+                "qar_4": {
+                    "question": "What is the color and shape of the soccer ball?",
+                    "answer": "The ball is white and round.",
+                    "rationales": [
+                        "The ball is white and round."
+                    ]
+                },
+                "qar_5": {
+                    "question": "Where is the soccer ball in the image?",
+                    "answer": "The ball is in mid-air, being kicked by one of the players.",
+                    "rationales": [
+                        "The ball is in mid-air, being kicked by one of the players."
+                    ]
+                },
+                "qar_6": {
+                    "question": "What is the color and condition of the soccer field?",
+                    "answer": "The field is green and grassy.",
+                    "rationales": [
+                        "The field is green and grassy."
+                    ]
+                },
+                "qar_7": {
+                    "question": "What are the white lines on the field for?",
+                    "answer": "The lines mark the boundaries and goals of the field.",
+                    "rationales": [
+                        "There are white lines marking the field, indicating the boundaries and goals."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 49,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "He has tattoos on his left arm, which could relate to his work as a fisherman.",
+                    "answer": "His tattoos indicate a connection to his profession.",
+                    "rationales": [
+                        "His tattoos, likely related to his profession, suggest a strong sense of identity and connection to his work."
+                    ]
+                },
+                "qar_2": {
+                    "question": "There are several unripe and green bananas on the table, what other fruits could be present on the table?",
+                    "answer": "The presence of bananas indicates a fruit market.",
+                    "rationales": [
+                        "The image shows a fruit market, suggesting that various types of fruits are available for sale, including unripe bananas."
+                    ]
+                },
+                "qar_3": {
+                    "question": "He is sitting at the market, possibly waiting for customers or arranging the fruit.",
+                    "answer": "He appears to be a vendor, arranging the fruit for sale.",
+                    "rationales": [
+                        "The man is sitting among the fruit, indicating that he is actively involved in the market, likely as a vendor preparing for customers."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 50,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the person behind the batter wearing?",
+                    "answer": "The person behind the batter is a baseball umpire.",
+                    "rationales": [
+                        "The person is wearing a black shirt with the letters 'U' or 'M' on the sleeve, which is commonly associated with baseball umpires. The person is also standing near the batter, which is a typical position for an umpire to monitor the game. Additionally, the person's attire is similar to the batter's, indicating that they are likely a team member or official."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 51,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "Does the child have a helmet?",
+                    "answer": "Yes",
+                    "rationales": [
+                        "The child is wearing a blue helmet."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What type of surface is the child skateboarding on?",
+                    "answer": "A smooth, paved surface",
+                    "rationales": [
+                        "The child is skateboarding on a smooth, flat, and paved surface, which is typical of urban or park areas."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What might the child hit if they lost balance?",
+                    "answer": "The wall",
+                    "rationales": [
+                        "The child is skateboarding near a wall or a barrier, and if they lose balance, they might hit the wall or the barrier."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 52,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the purpose of the traffic light in this image's context?",
+                    "answer": "To regulate traffic flow",
+                    "rationales": [
+                        "The traffic light is situated above the street, indicating it is used to control traffic flow."
+                    ]
+                },
+                "qar_2": {
+                    "question": "How many types of cars are parked along the street?",
+                    "answer": "Five different cars are parked on the street",
+                    "rationales": [
+                        "There are five cars of varying sizes visible in the image."
+                    ]
+                },
+                "qar_3": {
+                    "question": "What implications does the street sign have in this image's location?",
+                    "answer": "The street sign indicates the location as Redmond Way",
+                    "rationales": [
+                        "The sign displays the name \"Redmond Way,\" which identifies the street in the image."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 53,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "Is the fire hydrant near a parking lot?",
+                    "answer": "Yes",
+                    "rationales": [
+                        "The image depicts a fire hydrant in the middle of the image, situated in a parking lot with many cars."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What is the purpose of the cupcake decoration on the silver trailer?",
+                    "answer": "The cupcake decoration likely serves as a playful and unique design element, adding a whimsical touch to the trailer.",
+                    "rationales": [
+                        "The image shows a cupcake design on the trailer, which could symbolize sweetness, joy, or other related concepts. The trailer also seems to be a food or food-related vehicle, as indicated by the presence of a cupcake on top."
+                    ]
+                },
+                "qar_3": {
+                    "question": "Does the stop sign influence traffic flow?",
+                    "answer": "Yes",
+                    "rationales": [
+                        "The stop sign is prominently displayed in the middle of the street, indicating that drivers should come to a complete stop before proceeding."
+                    ]
+                }
+            }
+        }
+    },
+    {
+        "serial": 54,
+        "syn_qars": {
+            "mllm_1": {
+                "qar_1": {
+                    "question": "What is the significance of the airplane landing in this image?",
+                    "answer": "The airplane is landing at an airport, indicating the start or end of a journey.",
+                    "rationales": [
+                        "The image shows a runway with a plane descending onto it, accompanied by a control tower, taxis, and parked aircraft, all of which are typical features of an airport. This context suggests that the plane is landing to begin or conclude a flight."
+                    ]
+                },
+                "qar_2": {
+                    "question": "What's the significance of palm trees in urban environments?",
+                    "answer": "Palm trees are often used for landscaping and aesthetic purposes in urban areas, providing shade, beauty, and a touch of nature to urban landscapes.",
+                    "rationales": [
+                        "The image shows several palm trees scattered around the airport, which is located in an urban setting. This indicates that the trees are likely there to enhance the aesthetic appeal of the area and provide some greenery to an otherwise concrete environment."
+                    ]
+                },
+                "qar_3": {
+                    "question": "How likely is the airplane encountering obstacles while flying over the city?",
+                    "answer": "The likelihood of the airplane encountering obstacles while flying over the city is relatively low, as commercial airliners typically follow established flight paths and are equipped with advanced navigation systems and air traffic control.",
+                    "rationales": [
+                        "The image does not depict the airplane in the air, only in the process of landing. Commercial flights typically operate within designated airspace and are closely monitored by air traffic control."
+                    ]
+                }
+            }
+        }
+    }
+]
