@@ -21,6 +21,9 @@ RUN apt-get update -q && \
 RUN pip install --upgrade pip \
     && pip install setuptools==61.0 wheel build
 
+# Install torch with the appropriate CUDA version
+RUN pip install torch==2.2.1+cu118 -f https://download.pytorch.org/whl/torch_stable.html
+
 # Install the project dependencies
 RUN pip install \
     absl-py==2.1.0 \
@@ -124,7 +127,6 @@ RUN pip install \
     lightning-cloud==0.5.70 \
     lightning-utilities==0.11.7 \
     lightning_sdk==0.1.17 \
-    llm2vec==0.2.2 \
     locket==1.0.0 \
     Markdown==3.7 \
     markdown-it-py==3.0.0 \
@@ -155,7 +157,6 @@ RUN pip install \
     requests==2.32.3 \
     scikit-learn==1.3.2 \
     sentence-transformers==3.2.1 \
-    torch==2.2.1+cu121 \
     transformers==4.46.3
 
 # Install git-based dependencies for LLaVA
