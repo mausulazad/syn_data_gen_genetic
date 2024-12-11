@@ -2,8 +2,8 @@ import json
 
 import hashlib
 #from fuzzywuzzy import fuzz
-#from sklearn.feature_extraction.text import TfidfVectorizer
-#from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 from utils import postprocess_qars, postprocess_judgement_details
@@ -111,6 +111,30 @@ def generate_evol_method(final_judge, image, qars):
     qars_with_evol = final_judge.evaluate(image, qars)
     return qars_with_evol
 
-#TODO: Evolve QARs
-def evolve_qars():
-    pass
+
+#Evolve QARs
+def evolve_qars(generator_mllms, slm, image, image_details, evolvable_questions):
+    #new_fields = {"image": image_details["image"], "original_question_id": image_details["question_id"]}
+    syn_qars_details = {}
+    for i, mllm in enumerate(generator_mllms):
+        questions = mllm.generate(image, use_evol_prompt=True, questions=None, evolvable_questions=evolvable_questions)
+        syn_qars = mllm.generate(image, use_evol_prompt=False, questions=questions, evolvable_questions=[])
+        syn_qars = postprocess_qars(slm, syn_qars)
+        try:
+            syn_qars = json.loads(syn_qars)
+        except json.JSONDecodeError:
+            print(f'Error: Could not parse syn_qars moving to next mllm.')
+            continue
+
+        syn_qars = [
+            {**qar, 'rationales': [qar['rationale']], 'rationale': None} for qar in syn_qars
+        ]
+
+        syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
+        
+        #syn_qars = [{**qar, **new_fields} for qar in syn_qars]
+
+        syn_qars_details[f'mllm_{i+1}'] = {}
+        for j, qar in enumerate(syn_qars):
+            syn_qars_details[f'mllm_{i+1}'][f'qar_{j+1}'] = qar
+    return syn_qars_details

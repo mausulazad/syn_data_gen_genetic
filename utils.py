@@ -18,9 +18,9 @@ import hashlib
 from transformers import pipeline
 from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, LlavaForConditionalGeneration, GenerationConfig
 
-from fuzzywuzzy import fuzz
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+#from fuzzywuzzy import fuzz
+#from sklearn.feature_extraction.text import TfidfVectorizer
+#from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 from huggingface_hub import HfApi
@@ -206,14 +206,14 @@ def setup_generator_models(generator_models):
     for model_name in generator_models:
         if model_name == "llama_32":
             model, processor = setup_llama32()
-            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate", criteria=CRITERIA, few_shot_questions=FEW_SHOT_QUESTIONS))
+            generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))
         elif model_name == "llava_next":
             model, processor = setup_llava_next()
-            generator_mllms.append(MLLM(model, processor, model_family="llava_next", inference_type="generate", criteria=CRITERIA, few_shot_questions=FEW_SHOT_QUESTIONS))
+            generator_mllms.append(MLLM(model, processor, model_family="llava_next", inference_type="generate"))
         elif model_name == "molmo":
             # NOT WORKING: Bug fix is needed
             model, processor = setup_molmo()
-            generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type="generate", criteria=CRITERIA, few_shot_questions=FEW_SHOT_QUESTIONS))
+            generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type="generate"))
         '''
         elif model_name == "llava":
             model, processor = setup_llava()
@@ -263,7 +263,7 @@ def setup_models(generator_models, judge_model, br_model):
     return (generator_mllms, judge_mllm, br_mllm)
 
 
-def setup_final_judge():
+def setup_final_judge(model="llava_critic"):
     warnings.filterwarnings("ignore")
     '''
     pretrained = "lmms-lab/llava-onevision-qwen2-7b-ov"
@@ -275,12 +275,33 @@ def setup_final_judge():
     return final_judge
     '''
 
-    pretrained = "lmms-lab/llava-critic-7b"
-    model_name = "llava_qwen"
-    device = "cuda"
-    device_map = "auto"
-    tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
-    final_judge = FinalJudge(model, image_processor, tokenizer, max_length)
+    if model == "llava_critic":
+        print("Using LLaVA-Critic as final judge...")
+        pretrained = "lmms-lab/llava-critic-7b"
+        model_name = "llava_qwen"
+        device = "cuda"
+        device_map = "auto"
+        tokenizer, model, image_processor, max_length = load_pretrained_model(pretrained, None, model_name, device_map=device_map)
+        final_judge = FinalJudge(model, image_processor, tokenizer, max_length)
+    elif model == "llava_next":
+        print("Using LLaVA-Next as final judge...")
+        model_id = "llava-hf/llava-v1.6-mistral-7b-hf"
+    
+        model = LlavaNextForConditionalGeneration.from_pretrained(
+            model_id, 
+            device_map="cuda",
+            trust_remote_code=True,
+            torch_dtype="auto"
+        )
+
+        processor = LlavaNextProcessor.from_pretrained(
+            model_id,
+            trust_remote_code=True,
+            torch_dtype='auto',
+            device_map='auto'
+        )
+
+        final_judge = FinalJudge(model, processor)
     return final_judge
 
 
@@ -455,7 +476,6 @@ def postprocess_judgement_details(slm, judgement_text):
                     "justification": "<string>"
                 }
             },
-            "total_score": <integer>,
             "total_justification": "<string>",
             "failures": "<string or null>",
             "evolution_method": "<string>"
@@ -464,7 +484,7 @@ def postprocess_judgement_details(slm, judgement_text):
         ### Instructions:
         1.Ensure Correct Parsing:
           -Extract scores and justifications for each criterion (commonsense, physical_world, visual_understanding, reasoning, complexity).
-          -Capture the total_score, total_justification, failures, and evolution_method as presented in the input.
+          -Capture the total_justification, failures, and evolution_method as presented in the input.
         2. DO NOT infer or hallucinate missing details. Use only the explicitly provided information.
         3. The input structure may differ from the given example structure (e.g., different separators, label formatting, or order). Be flexible and adapt to process such variations while maintaining accuracy.
         4. If any field is missing in the input, return an error message in JSON format:
@@ -486,8 +506,6 @@ def postprocess_judgement_details(slm, judgement_text):
           - The question requires reasoning to infer the man's destination based on his actions and the context.
         - **Complexity**: 10
           - The question is straightforward but requires some inference.
-
-        **Total Score**: 65
 
         **Justification**:
         The question is well-rounded, requiring both commonsense knowledge and reasoning capabilities. It directly relates to the visual content of the image and does not overly complicate the task.
@@ -522,7 +540,6 @@ def postprocess_judgement_details(slm, judgement_text):
                     "justification": "The question is straightforward but requires some inference."
                 }
             },
-            "total_score": 65,
             "total_justification": "The question is well-rounded, requiring both commonsense knowledge and reasoning capabilities. It directly relates to the visual content of the image and does not overly complicate the task.",
             "failures": null,
             "evolution_method": "To improve the question without compromising its quality, one could add more context or details that would make the inference more challenging. For example, asking about the man's specific destination (e.g., 'What city is he heading to?') would increase the complexity while still being relevant to the image."
@@ -548,11 +565,17 @@ def postprocess_judgement_details(slm, judgement_text):
     output = outputs[0]["generated_text"][-1]['content']
     cleaned_output = clean_out_json_output(output)
     
+    valid_aspects = ["commonsense", "physical_world", "visual_understanding", "reasoning", "complexity"]
     try:
         parsed_output = json.loads(cleaned_output)
+        total_score = sum(
+            parsed_output["scores"][aspect]["value"] for aspect in valid_aspects if aspect in parsed_output["scores"]
+        )
+        parsed_output["total_score"] = total_score
     except json.JSONDecodeError:
         print(f'Error: Could not parse syn_qar')
         parsed_output = None
+
     return parsed_output
 
 def clean_out_json_output(json_string):
