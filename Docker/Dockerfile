@@ -151,7 +151,12 @@ RUN pip install \
     pandas==1.5.3 \
     pandocfilters==1.5.1 \
     peft==0.13.2 \
-    Pillow==10.4.0
+    Pillow==10.4.0 \
+    requests==2.32.3 \
+    scikit-learn==1.3.2 \
+    sentence-transformers==3.2.1 \
+    torch==2.2.1+cu121 \
+    transformers==4.46.3
 
 # Install git-based dependencies for LLaVA
 RUN pip install git+https://github.com/LLaVA-VL/LLaVA-NeXT.git@79ef45a6d8b89b92d7a8525f077c3a3a9894a87d

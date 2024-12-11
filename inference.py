@@ -19,8 +19,8 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
     slm = setup_slm()
-    # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
-    final_judge = setup_final_judge(model="llava_critic")
+    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    #final_judge = setup_final_judge(model="llava_critic")
 
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
@@ -35,12 +35,14 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # while runs < 5:
     for i, data in enumerate(seed_dataset):
         tries = 0
-        #evolvable_questions = []
+        evolvable_questions = []
+        """
         evolvable_questions = [
             ('What time of day is it in the image?', 'Add more context or details to increase the complexity without compromising other aspects.'), 
             ('How many suitcases does the man have?', 'No significant evolution is needed for this question as it is already clear and concise. However, if the goal is to increase complexity, one could ask about the total weight of the suitcases or the purpose of the man carrying them, which would require more reasoning and context..'), 
             ("What is the man's destination?", 'To improve the question, add elements that require specific visual details to answer, such as asking about the type of luggage or the specific setting, to enhance complexity without compromising other aspects..')
         ]
+        """
         
         #while tries <= 4:
         if len(evolvable_questions) == 0:
@@ -63,9 +65,10 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
 
         synthetic_qars.extend(unique_qars)
 
-        syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
+        # syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
             
             
+        """
         # TODO: Move to 'steps' file
         evolvable_questions = []
         for syn_qar in syn_qars_with_evol:
@@ -76,15 +79,18 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
                     "image": data["image"],
                     "question": syn_qar["question"],
                     "direct_answer": syn_qar["answer"],
-                    "choices": choices
+                    #"choices": choices
                 })
             else:
                 evolvable_questions.append((syn_qar["question"], syn_qar["judgement_details"]["evolution_method"]))
-
+        """
+        
+        """
         if len(evolvable_questions) == 0:
             break
         else:
             tries += 1
+        """
 
         #if i % 20 == 0:
         #    print(f"QAR for {i} images are generated")

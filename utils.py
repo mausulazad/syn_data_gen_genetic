@@ -18,9 +18,9 @@ import hashlib
 from transformers import pipeline
 from transformers import MllamaForConditionalGeneration, AutoProcessor, AutoModelForCausalLM, LlavaForConditionalGeneration, GenerationConfig
 
-from fuzzywuzzy import fuzz
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+#from fuzzywuzzy import fuzz
+#from sklearn.feature_extraction.text import TfidfVectorizer
+#from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 from huggingface_hub import HfApi
