@@ -24,6 +24,9 @@ RUN pip install --upgrade pip \
 # Install torch with the appropriate CUDA version
 RUN pip install torch==2.2.1+cu118 -f https://download.pytorch.org/whl/torch_stable.html
 
+# Install torchvision with the matching CUDA version
+RUN pip install torchvision==0.17.1+cu118 -f https://download.pytorch.org/whl/torch_stable.html
+
 # Install the project dependencies
 RUN pip install \
     absl-py==2.1.0 \
@@ -73,7 +76,6 @@ RUN pip install \
     fastjsonschema==2.20.0 \
     filelock==3.16.0 \
     fire==0.6.0 \
-    flash-attn==2.6.3 \
     fonttools==4.53.1 \
     fqdn==1.5.1 \
     frozenlist==1.4.1 \

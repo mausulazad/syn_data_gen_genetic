@@ -19,5 +19,5 @@ module purge
 module load apptainer
 
 
-apptainer exec --nv /scratch/mi8uu/mausul/sifs/syn_data_gen_evolve_v1.sif \
+apptainer exec --nv /scratch/mi8uu/mausul/sifs/syn_data_gen_evolve_v2.sif \
 python3 main.py --dataset aokvqa --generator_models llama_32 llava_next molmo --judge_model phi_3_vision --br_model phi_3_vision
