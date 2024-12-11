@@ -17,8 +17,8 @@ def main():
     judge_model = args.judge_model
     br_model = args.br_model
 
-    generate_qars(dataset, generator_models, judge_model, br_model)
-    #build_synthetic_dataset(dataset, generator_models, judge_model, br_model)
+    #generate_qars(dataset, generator_models, judge_model, br_model)
+    build_synthetic_dataset(dataset, generator_models, judge_model, br_model)
 
 if __name__ == "__main__":
     main()

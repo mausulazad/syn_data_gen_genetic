@@ -99,6 +99,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         
         #if i >= 700:
         #    break
+        print(synthetic_qars)
         break
 
     # Store in huggingface repo
