@@ -32,6 +32,8 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     #TODO: append object with options
     #slm = None
     synthetic_qars = []
+    #slm = None
+    #generator_mllms = ["molmo", "llama_32", "llava_32"]
     # while runs < 5:
     for i, data in enumerate(seed_dataset):
         tries = 0
