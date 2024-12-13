@@ -103,21 +103,18 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             tries += 1
         """
 
-        #if i % 20 == 19:
-        if i % 2 == 1:
+        if i % 20 == 19:
             print(f"qars for {i+1} images are generated...")
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
         
-        #if i >= 250:
-        #    break
-        if i >= 10:
+        if i >= 250:
             break
 
     # Store in huggingface repo
     #repo_name = "syn_dataset_no_evolution_single_run"
-    repo_name = "syn_dataset_no_evolution_single_run_sample"
+    repo_name = "syn_dataset_no_evolution_single_run_smol_v0"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
 
 """
