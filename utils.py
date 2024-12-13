@@ -38,6 +38,14 @@ from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 from datasets import load_dataset, Dataset
 from models import MLLM, Judge, BackwardReasoner, FinalJudge
 
+# pwd = os.getcwd()  
+# os.environ['HF_HOME']=f'{pwd}/.cache'
+# cache_dir=f'{pwd}/.cache'
+cache_dir= '/scratch/mi8uu/cache'
+os.environ['TRANSFORMERS_CACHE']=cache_dir
+os.environ['HF_HOME']= cache_dir
+
+
 CRITERIA = [
     "The question should require commonsense knowledge about human social behavior to answer.",
     "The question should require knowledge of the physical world to answer.",
@@ -57,7 +65,7 @@ FEW_SHOT_QUESTIONS = [
 
 def load_and_preprocess_dataset(dataset_name):
     if dataset_name == "aokvqa":
-        dataset = load_dataset("HuggingFaceM4/A-OKVQA")
+        dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
         # We are generating synthetic qar by using training data as seed dataset
         # Later we will finetune using test data (and validation data as needed)
         return dataset["train"]
@@ -68,12 +76,14 @@ def setup_llama32():
         model_id,
         torch_dtype="auto",
         device_map="auto",
+        cache_dir=cache_dir
     )
     processor = AutoProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto'
+        device_map='auto',
+        cache_dir=cache_dir
     )
 
     return (model, processor)
@@ -84,13 +94,15 @@ def setup_molmo():
         model_id,
         trust_remote_code=True,
         torch_dtype="auto",
-        device_map="auto"
+        device_map="auto",
+        cache_dir=cache_dir
     )
     processor = AutoProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto'
+        device_map='auto',
+        cache_dir=cache_dir
     )
 
     return (model, processor)
@@ -103,14 +115,16 @@ def setup_llava():
         model_id,
         trust_remote_code=True,
         torch_dtype="auto",
-        device_map="auto"
+        device_map="auto",
+        cache_dir=cache_dir
     )
 
     processor = AutoProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto'
+        device_map='auto',
+        cache_dir=cache_dir
     )
 
     return (model, processor)
@@ -126,7 +140,8 @@ def setup_llava_critic():
         model_id, 
         None, 
         model_name, 
-        device_map=device_map
+        device_map=device_map,
+        cache_dir=cache_dir
     ) 
 
     #url = "https://github.com/haotian-liu/LLaVA/blob/1a91fc274d7c35a9b50b3cb29c4247ae5837ce39/images/llava_v1_5_radar.jpg?raw=true"
@@ -159,7 +174,8 @@ def setup_llava_critic():
         model_id, 
         None, 
         model_name, 
-        device_map="auto"
+        device_map="auto",
+        cache_dir=cache_dir
     )
 
 def setup_phi3_vision():
@@ -170,13 +186,15 @@ def setup_phi3_vision():
         device_map="cuda", 
         trust_remote_code=True, 
         torch_dtype="auto", 
-        _attn_implementation='flash_attention_2'
+        _attn_implementation='flash_attention_2',
+        cache_dir=cache_dir
     )
 
     processor = AutoProcessor.from_pretrained(
         model_id, 
         trust_remote_code=True, 
-        num_crops=16
+        num_crops=16,
+        cache_dir=cache_dir
     )
     return (model, processor)
 
@@ -188,14 +206,16 @@ def setup_llava_next():
         model_id, 
         device_map="cuda",
         trust_remote_code=True,
-        torch_dtype="auto"
+        torch_dtype="auto",
+        cache_dir=cache_dir
     )
 
     processor = LlavaNextProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto'
+        device_map='auto',
+        cache_dir=cache_dir
     )
 
     return (model, processor)
@@ -655,15 +675,13 @@ def load_json_file(file_name):
 def convert_and_upload_to_hf(qars, repo_name):
     api = HfApi()
     user_name = api.whoami()["name"]
-
     formatted_qars = {key: [qar[key] for qar in qars] for key in qars[0]}
     dataset = Dataset.from_dict(formatted_qars)
     
     repo_id=f"{user_name}/{repo_name}"
-    api.create_repo(repo_id=repo_id)
+    api.create_repo(repo_id=repo_id, repo_type="dataset")
     dataset.push_to_hub(repo_id)
     print(f"Dataset is loaded to repo: {repo_id}")
-    
     return
 
 """

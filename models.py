@@ -249,7 +249,7 @@ class MLLM:
                         8. DO NOT provide answers or any additional information beyond the formatted list.
                         9. Ensure that there are no fewer than 3 questions, and all strictly follow these rules."""
                 
-                    system_prompt = self.question_system_prompt.format(criteria=criteria, example_questions=few_shot_questions)
+                    system_prompt = self.question_system_prompt.format(criteria=criteria, examples=few_shot_examples)
                 
                 messages = [
                     { "role": "assistant", "content": system_prompt },

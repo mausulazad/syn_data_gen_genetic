@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 import random
 import copy
 import pprint
@@ -18,18 +19,16 @@ from steps import generate_qars, evolve_qars, judge_qars, verify_inference, dedu
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
-    # slm = setup_slm()
-    # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    slm = setup_slm()
+    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
     #final_judge = setup_final_judge(model="llava_critic")
 
-    """
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
     #random_i = random.randint(0, len(image_data)-1)
     #image = image_data[random_i]["image"]
     #image = image_data[15572]["image"]
     #image = image_data[9344]["image"]
-    """
 
     #TODO: append object with options
     #slm = None
@@ -37,7 +36,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     #slm = None
     #generator_mllms = ["molmo", "llama_32", "llava_32"]
     # while runs < 5:
-    seed_dataset = []
+    total_inference_time = 0
     for i, data in enumerate(seed_dataset):
         tries = 0
         evolvable_questions = []
@@ -49,7 +48,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         ]
         """
         
-        """
+        start = time.time()
         #while tries <= 4:
         if len(evolvable_questions) == 0:
             syn_qars_details = generate_qars(generator_mllms, slm, data["image"], data)
@@ -68,11 +67,16 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
 
         # De-duplicate initially filtered qars
         unique_qars = deduplicate_qars(syn_qar_bucket)
+        
+        end = time.time()
+        
+        elapsed_time = end - start
+        # print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
+        total_inference_time += elapsed_time
 
         synthetic_qars.extend(unique_qars)
 
         # syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
-        """
             
             
         """
@@ -99,19 +103,24 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             tries += 1
         """
 
-        #if i % 20 == 0:
-        #    print(f"QAR for {i} images are generated")
+        #if i % 20 == 19:
+        if i % 2 == 1:
+            print(f"qars for {i+1} images are generated...")
+            print(f"No. of qars generated (till now): {len(synthetic_qars)}")
+            print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
+            print("="*80)
         
-        #if i >= 700:
+        #if i >= 250:
         #    break
-        # print(synthetic_qars)
-        break
+        if i >= 10:
+            break
 
     # Store in huggingface repo
     #repo_name = "syn_dataset_no_evolution_single_run"
-    #convert_and_upload_to_hf(synthetic_qars, repo_name)
+    repo_name = "syn_dataset_no_evolution_single_run_sample"
+    convert_and_upload_to_hf(synthetic_qars, repo_name)
 
-
+"""
 # TODO: Later, make parallel inference calls (as possible)
 def generate_qars(dataset, generator_models, judge_model, br_model):
     image_data = load_and_preprocess_dataset(dataset)
@@ -139,9 +148,6 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     with open("judge_llava_next_generator_llama_v2.json", "w") as file:
         json.dump(judged_syn_qars, file, indent=4)
 
-    
-    
-    """
     image_ids = []
     for syn_qar in sample_syn_qars:
         image_ids.append(syn_qar["serial"])
@@ -211,7 +217,7 @@ def generate_qars(dataset, generator_models, judge_model, br_model):
     #TODO: Apply dedup again on final synthetic dataset
 
     #TODO: Store in huggingface
-    """
+"""
 
 
 """
