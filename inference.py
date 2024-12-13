@@ -114,7 +114,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
 
     # Store in huggingface repo
     #repo_name = "syn_dataset_no_evolution_single_run"
-    repo_name = "syn_dataset_no_evolution_single_run_smol_v0"
+    repo_name = "syn_dataset_no_evolution_single_run_smol_v0_no_choices"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
 
 """
