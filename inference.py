@@ -18,16 +18,18 @@ from steps import generate_qars, evolve_qars, judge_qars, verify_inference, dedu
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
-    slm = setup_slm()
-    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    # slm = setup_slm()
+    # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
     #final_judge = setup_final_judge(model="llava_critic")
 
+    """
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
     #random_i = random.randint(0, len(image_data)-1)
     #image = image_data[random_i]["image"]
     #image = image_data[15572]["image"]
     #image = image_data[9344]["image"]
+    """
 
     #TODO: append object with options
     #slm = None
@@ -35,6 +37,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     #slm = None
     #generator_mllms = ["molmo", "llama_32", "llava_32"]
     # while runs < 5:
+    seed_dataset = []
     for i, data in enumerate(seed_dataset):
         tries = 0
         evolvable_questions = []
@@ -46,6 +49,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         ]
         """
         
+        """
         #while tries <= 4:
         if len(evolvable_questions) == 0:
             syn_qars_details = generate_qars(generator_mllms, slm, data["image"], data)
@@ -68,6 +72,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         synthetic_qars.extend(unique_qars)
 
         # syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
+        """
             
             
         """
@@ -99,7 +104,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         
         #if i >= 700:
         #    break
-        print(synthetic_qars)
+        # print(synthetic_qars)
         break
 
     # Store in huggingface repo
