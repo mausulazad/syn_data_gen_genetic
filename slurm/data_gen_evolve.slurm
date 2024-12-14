@@ -3,13 +3,13 @@
 #SBATCH -A collabrobogroup
 #SBATCH --array=0
 #SBATCH --ntasks=1 
-#SBATCH -t 14:00:00 
+#SBATCH -t 28:00:00 
 #SBATCH -p gpu
 #SBATCH --gres=gpu:a40:4
 #SBATCH --mem=256G
 #SBATCH -N 1 
 #SBATCH --output=log/slurm/no_evol_data_gen/log-%A-%a.log 
-#SBATCH -J no_evol_smol_v1
+#SBATCH -J no_evol_smol_v2
 
 export TORCH_HOME=/project/CollabRoboGroup/.cache
 export TRANSFORMERS_CACHE=/scratch/mi8uu/cache
