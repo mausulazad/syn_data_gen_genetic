@@ -8,7 +8,7 @@
 #SBATCH --gres=gpu:a40:4
 #SBATCH --mem=256G
 #SBATCH -N 1 
-#SBATCH --output=log/slurm/no_evol_data_gen/log-%A-%a.log 
+#SBATCH --output=log/slurm/option_gen/log-%A-%a.log 
 #SBATCH -J option_gen
 
 export TORCH_HOME=/project/CollabRoboGroup/.cache
