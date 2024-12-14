@@ -49,7 +49,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         
         start = time.time()
         syn_qar_bucket = []
-        max_runs = 3
+        max_runs = 1
         runs = 0
         while runs < max_runs:
             if len(evolvable_questions) == 0:
@@ -104,28 +104,28 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             tries += 1
         """
 
-        """
         if i % 20 == 19:
             print(f"qars for {i+1} images are generated...")
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
-        """
         
+        """
         if i % 2 == 1:
             print(f"qars for {i+1} images are generated...")
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
+        """
         
-        if i >= 5:
+        if i >= 500:
             break
         #print(len(synthetic_qars))
         #break
 
     # Store in huggingface repo
-    #repo_name = "syn_dataset_no_evolution_single_run_smol_v3"
-    repo_name = "syn_dataset_parallel_gen_sample"
+    repo_name = "syn_dataset_no_evolution_single_run_smol_v1"
+    #repo_name = "syn_dataset_parallel_gen_sample"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
 
 """
