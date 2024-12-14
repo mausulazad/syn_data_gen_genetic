@@ -49,8 +49,9 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         
         start = time.time()
         syn_qar_bucket = []
+        max_runs = 3
         runs = 0
-        while runs < 3:
+        while runs < max_runs:
             if len(evolvable_questions) == 0:
                 syn_qars_details = generate_qars(generator_mllms, slm, data["image"], data)
             else:
@@ -64,7 +65,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
                 for qar in syn_qars_details[mllm]:
                     #if (syn_qars_details[mllm][qar]["br_score"] > 0.7):
                     syn_qar_bucket.append(syn_qars_details[mllm][qar])
-            run += 1
+            runs += 1
 
         # De-duplicate initially filtered qars
         unique_qars = deduplicate_qars(syn_qar_bucket)
@@ -72,15 +73,12 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         end = time.time()
         
         elapsed_time = end - start
-        # print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
+        #print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
         total_inference_time += elapsed_time
 
         synthetic_qars.extend(unique_qars)
-
-        print(len(synthetic_qars))
         
-        # syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
-            
+        # syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)            
             
         """
         # TODO: Move to 'steps' file
@@ -112,16 +110,23 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
-        
-        if i >= 2000:
-            break
         """
-        break
+        
+        if i % 2 == 1:
+            print(f"qars for {i+1} images are generated...")
+            print(f"No. of qars generated (till now): {len(synthetic_qars)}")
+            print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
+            print("="*80)
+        
+        if i >= 5:
+            break
+        #print(len(synthetic_qars))
+        #break
 
     # Store in huggingface repo
     #repo_name = "syn_dataset_no_evolution_single_run_smol_v3"
-    #repo_name = "syn_dataset_parallel_gen_sample"
-    #convert_and_upload_to_hf(synthetic_qars, repo_name)
+    repo_name = "syn_dataset_parallel_gen_sample"
+    convert_and_upload_to_hf(synthetic_qars, repo_name)
 
 """
 # TODO: Later, make parallel inference calls (as possible)

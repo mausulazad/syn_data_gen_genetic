@@ -28,7 +28,7 @@ def generate_qars(generator_mllms, slm, image, image_details):
             continue
 
         syn_qars = [
-            {**qar, 'rationales': [qar.get('rationale', 'NOT GENERATED')], 'rationale': None} for qar in syn_qars
+            {**qar, 'rationales': [qar.get('rationale', 'Not Generated')], 'rationale': None} for qar in syn_qars
         ]
 
         syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
@@ -132,7 +132,7 @@ def evolve_qars(generator_mllms, slm, image, image_details, evolvable_questions)
             continue
 
         syn_qars = [
-            {**qar, 'rationales': [qar['rationale']], 'rationale': None} for qar in syn_qars
+            {**qar, 'rationales': [qar.get('rationale', 'Not Generated')], 'rationale': None} for qar in syn_qars
         ]
 
         syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
