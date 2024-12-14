@@ -109,12 +109,11 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
         
-        if i >= 250:
+        if i >= 500:
             break
 
     # Store in huggingface repo
-    #repo_name = "syn_dataset_no_evolution_single_run"
-    repo_name = "syn_dataset_no_evolution_single_run_smol_v0_no_choices"
+    repo_name = "syn_dataset_no_evolution_single_run_smol_v1"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
 
 """
