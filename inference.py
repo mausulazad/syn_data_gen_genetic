@@ -35,10 +35,9 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     synthetic_qars = []
     #slm = None
     #generator_mllms = ["molmo", "llama_32", "llava_32"]
-    # while runs < 5:
     total_inference_time = 0
     for i, data in enumerate(seed_dataset):
-        tries = 0
+        evol_tries = 0
         evolvable_questions = []
         """
         evolvable_questions = [
@@ -49,21 +48,23 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         """
         
         start = time.time()
-        #while tries <= 4:
-        if len(evolvable_questions) == 0:
-            syn_qars_details = generate_qars(generator_mllms, slm, data["image"], data)
-        else:
-            syn_qars_details = evolve_qars(generator_mllms, slm, data["image"], data, evolvable_questions)
-        
-        #syn_qars_details = judge_qars(judge_mllm, slm, data["image"], syn_qars_details)
-        #syn_qars_details = verify_inference(br_mllm, slm, data["image"], syn_qars_details)
-
-        # Filter out qars that do not pass inference verifier
         syn_qar_bucket = []
-        for mllm in syn_qars_details:
-            for qar in syn_qars_details[mllm]:
-                #if (syn_qars_details[mllm][qar]["br_score"] > 0.7):
-                syn_qar_bucket.append(syn_qars_details[mllm][qar])
+        runs = 0
+        while runs < 3:
+            if len(evolvable_questions) == 0:
+                syn_qars_details = generate_qars(generator_mllms, slm, data["image"], data)
+            else:
+                syn_qars_details = evolve_qars(generator_mllms, slm, data["image"], data, evolvable_questions)
+        
+            #syn_qars_details = judge_qars(judge_mllm, slm, data["image"], syn_qars_details)
+            #syn_qars_details = verify_inference(br_mllm, slm, data["image"], syn_qars_details)
+
+            # Filter out qars that do not pass inference verifier
+            for mllm in syn_qars_details:
+                for qar in syn_qars_details[mllm]:
+                    #if (syn_qars_details[mllm][qar]["br_score"] > 0.7):
+                    syn_qar_bucket.append(syn_qars_details[mllm][qar])
+            run += 1
 
         # De-duplicate initially filtered qars
         unique_qars = deduplicate_qars(syn_qar_bucket)
@@ -76,6 +77,8 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
 
         synthetic_qars.extend(unique_qars)
 
+        print(len(synthetic_qars))
+        
         # syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)
             
             
@@ -103,6 +106,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             tries += 1
         """
 
+        """
         if i % 20 == 19:
             print(f"qars for {i+1} images are generated...")
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
@@ -111,10 +115,13 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         
         if i >= 2000:
             break
+        """
+        break
 
     # Store in huggingface repo
-    repo_name = "syn_dataset_no_evolution_single_run_smol_v3"
-    convert_and_upload_to_hf(synthetic_qars, repo_name)
+    #repo_name = "syn_dataset_no_evolution_single_run_smol_v3"
+    #repo_name = "syn_dataset_parallel_gen_sample"
+    #convert_and_upload_to_hf(synthetic_qars, repo_name)
 
 """
 # TODO: Later, make parallel inference calls (as possible)

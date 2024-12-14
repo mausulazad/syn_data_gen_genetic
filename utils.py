@@ -184,7 +184,8 @@ def setup_phi3_vision():
 
     model = AutoModelForCausalLM.from_pretrained(
         model_id, 
-        device_map="cuda", 
+        #device_map="cuda",
+        device_map="auto", 
         trust_remote_code=True, 
         torch_dtype="auto", 
         _attn_implementation='flash_attention_2',
@@ -205,7 +206,8 @@ def setup_llava_next():
     
     model = LlavaNextForConditionalGeneration.from_pretrained(
         model_id, 
-        device_map="cuda",
+        #device_map="cuda",
+        device_map="auto",
         trust_remote_code=True,
         torch_dtype="auto",
         cache_dir=cache_dir
@@ -310,7 +312,8 @@ def setup_final_judge(model="llava_critic"):
     
         model = LlavaNextForConditionalGeneration.from_pretrained(
             model_id, 
-            device_map="cuda",
+            #device_map="cuda",
+            device_map="auto",
             trust_remote_code=True,
             torch_dtype="auto"
         )

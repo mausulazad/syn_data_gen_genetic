@@ -6,10 +6,14 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
+from accelerate import Accelerator
+accelerator = Accelerator()
+
 from utils import postprocess_qars, postprocess_judgement_details
 
 # QAR generation
 def generate_qars(generator_mllms, slm, image, image_details):
+    generator_mllms = [accelerator.prepare(mllm) for mllm in generator_mllms]
     new_fields = {"image": image_details["image"], "original_question_id": image_details["question_id"]}
     syn_qars_details = {}
     for i, mllm in enumerate(generator_mllms):
@@ -19,11 +23,12 @@ def generate_qars(generator_mllms, slm, image, image_details):
         try:
             syn_qars = json.loads(syn_qars)
         except json.JSONDecodeError:
-            print(f'Error: Could not parse syn_qars moving to next mllm.')
+            accelerator.print(f"Error: Could not parse syn_qars for model {i+1}. Skipping...")
+            #print(f'Error: Could not parse syn_qars moving to next mllm.')
             continue
 
         syn_qars = [
-            {**qar, 'rationales': [qar['rationale']], 'rationale': None} for qar in syn_qars
+            {**qar, 'rationales': [qar.get('rationale', 'NOT GENERATED')], 'rationale': None} for qar in syn_qars
         ]
 
         syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
