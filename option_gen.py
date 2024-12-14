@@ -1,5 +1,6 @@
 import os
 import time
+import json
 from PIL import Image 
 import requests 
 from transformers import AutoModelForCausalLM 
@@ -9,7 +10,7 @@ cache_dir= '/scratch/mi8uu/cache'
 os.environ['TRANSFORMERS_CACHE']=cache_dir
 os.environ['HF_HOME']= cache_dir
 
-from utils import load_and_preprocess_dataset, setup_llama32
+from utils import load_and_preprocess_dataset, setup_llama32, clean_out_json_output, convert_and_upload_to_hf
 
 vlm, processor = setup_llama32()
 
@@ -121,15 +122,60 @@ mcq_system_prompt = """You are an intelligent assistant tasked with generating m
         d. The people are protesting against local policies.
         Correct Choice: b
         
-        Do not hallucinate."""
+        DO NOT hallucinate. DO NOT ADD FALSE THINGS TO YOUR RESPONSE"""
+
+parser_system_prompt = """You are an assistant tasked with converting structured text containing a question, correct answer,
+    choices,and the correct choice into a JSON object. Follow these instructions to format the output correctly:
+
+    ### Input Format:
+    The input will include:
+    - A **Question**
+    - A **Correct Answer**
+    - Multiple **Choices** labeled with letters (a, b, c, d, etc.)
+    - A **Correct Choice** corresponding to one of the choices.
+
+    ### Output Format:
+    Convert the input into the following JSON structure:
+    ```json
+    {
+        "choices": [
+            "<Choice 1>",
+            "<Choice 2>",
+            "<Choice 3>",
+            "<Choice 4>"
+        ],
+        "correct_choice": "<The correct choice letter (a/b/c/d)>"
+    }
+    
+    Rules:
+    1. Remove the choice labels (e.g., a., b., c., d.) and list the choices in the choices array in the order they appear.
+    2. Use the text corresponding to the Correct Choice field as the value for correct_choice.
+    
+    Notes:
+    - Ensure all fields in the JSON object are correctly populated.
+    - Maintain the order of choices as presented in the input.
+    -The correct_choice field must match the corresponding correct choice letter (e.g., "c").
+    
+    Return only the JSON object. Nothing else.
+    DO NOT HALLUCINATE"""
 
 data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v0")
 
+CHOICE_MAP = {
+    "a": 0,
+    "b": 1,
+    "c": 2,
+    "d": 3
+}
+
 def generate_options():
+    updated_qars = []
     for i, qar in enumerate(data):
         image = qar["image"]
         question = qar["question"]
         correct_answer = qar["answer"]
+        
+        start = time.time()
         messages = [
             { "role": "assistant", "content": mcq_system_prompt },
             {
@@ -157,52 +203,55 @@ def generate_options():
         output = processor.decode(output[0][inputs.input_ids.shape[-1]:])
         output = output.split('<|eot_id|>')[0]
         
-        print(output)
-        """
         messages = [
-            {"role": "system", "content": mcq_system_prompt},
-            {"role": "user", "content": placeholder},
-            {"role": "user", "content": f'Question: {question}\nCorrect Answer: {correct_answer}\nChoices:\n'}
+            { "role": "assistant", "content": parser_system_prompt },
+            {
+                "role": "user", 
+                "content": [
+                    {"type": "image"},
+                    {"type": "text", "text": output}
+                ]
+            },
         ]
         
-        prompt = processor.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True
-        )
-        
-        inputs = processor(prompt, [image], return_tensors="pt").to(vlm.device) 
+        input_text = processor.apply_chat_template(messages, add_generation_prompt=True)
+        inputs = processor(
+            image,
+            input_text,
+            add_special_tokens=False,
+            return_tensors="pt"
+        ).to(vlm.device)
 
-        generation_args = { 
-            "max_new_tokens": 500, 
-            "temperature": 0.3, 
-            "do_sample": True,
-        }
-
-        start = time.time()
-        
-        generate_ids = vlm.generate(
+        output = vlm.generate(
             **inputs, 
-            eos_token_id=processor.tokenizer.eos_token_id,
-            **generation_args
+            temperature=0.3, 
+            max_new_tokens=300
         )
-
-        generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
-        output = processor.batch_decode(
-            generate_ids, 
-            skip_special_tokens=True,
-            clean_up_tokenization_spaces=False
-        )[0]
+        output = processor.decode(output[0][inputs.input_ids.shape[-1]:])
+        output = output.split('<|eot_id|>')[0]
         
         end = time.time()
         
         elapsed_time = end - start
         print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
-        print(output)
         
-        break
-        """
-          
-
+        new_fields = {"choices": [], "correct_choice_idx": None}
+        output = clean_out_json_output(output)
+        
+        try:
+            output = json.loads(output)
+            qar["choices"] = output.get("choices", [])
+            qar["correct_choice_idx"] = CHOICE_MAP.get(output.get("correct_choice", None), None)
+        except json.JSONDecodeError:
+            print(f'Error: Could not parse json object')
+            qar["choices"] = []
+            qar["correct_choice_idx"] = None
+            
+        updated_qars.append(qar)
+        
+        
+    repo_name = "syn_dataset_no_evolution_single_run_smol_v0_with_choices"
+    convert_and_upload_to_hf(updated_qars, repo_name, create_dataset=False)
+    
 if __name__ == "__main__":
     generate_options()

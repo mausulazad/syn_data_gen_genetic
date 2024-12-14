@@ -679,14 +679,15 @@ def load_json_file(file_name):
         data = json.load(json_file)
     return data
 
-def convert_and_upload_to_hf(qars, repo_name):
+def convert_and_upload_to_hf(qars, repo_name, create_dataset=True):
     api = HfApi()
     user_name = api.whoami()["name"]
     formatted_qars = {key: [qar[key] for qar in qars] for key in qars[0]}
     dataset = Dataset.from_dict(formatted_qars)
-    dataset = dataset.map(
-        lambda qar: {"synthetic_question_id": secrets.token_urlsafe(19)[:25]}
-    )
+    if create_dataset:
+        dataset = dataset.map(
+            lambda qar: {"synthetic_question_id": secrets.token_urlsafe(19)[:25]}
+        )
     
     repo_id=f"{user_name}/{repo_name}"
     api.create_repo(repo_id=repo_id, repo_type="dataset")
