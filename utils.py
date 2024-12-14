@@ -42,6 +42,7 @@ from models import MLLM, Judge, BackwardReasoner, FinalJudge
 # pwd = os.getcwd()  
 # os.environ['HF_HOME']=f'{pwd}/.cache'
 # cache_dir=f'{pwd}/.cache'
+
 cache_dir= '/scratch/mi8uu/cache'
 os.environ['TRANSFORMERS_CACHE']=cache_dir
 os.environ['HF_HOME']= cache_dir
@@ -69,7 +70,9 @@ def load_and_preprocess_dataset(dataset_name):
         dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
         # We are generating synthetic qar by using training data as seed dataset
         # Later we will finetune using test data (and validation data as needed)
-        return dataset["train"]
+    else:
+        dataset = load_dataset(dataset_name, cache_dir=cache_dir)
+    return dataset["train"]
 
 def setup_llama32():
     model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
