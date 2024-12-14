@@ -118,13 +118,13 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             print("="*80)
         """
         
-        if i >= 1000:
+        if i >= 2000:
             break
         #print(len(synthetic_qars))
         #break
 
     # Store in huggingface repo
-    repo_name = "syn_dataset_no_evolution_single_run_smol_v2"
+    repo_name = "syn_dataset_no_evolution_single_run_smol_v3"
     #repo_name = "syn_dataset_parallel_gen_sample"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
 
