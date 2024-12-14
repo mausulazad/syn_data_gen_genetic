@@ -71,7 +71,7 @@ def load_and_preprocess_dataset(dataset_name):
         # We are generating synthetic qar by using training data as seed dataset
         # Later we will finetune using test data (and validation data as needed)
     else:
-        dataset = load_dataset(dataset_name)
+        dataset = load_dataset(dataset_name, cache_dir=cache_dir)
     return dataset["train"]
 
 def setup_llama32():

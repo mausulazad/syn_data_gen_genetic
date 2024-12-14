@@ -1,4 +1,5 @@
 import os
+import time
 from PIL import Image 
 import requests 
 from transformers import AutoModelForCausalLM 
@@ -8,30 +9,32 @@ cache_dir= '/scratch/mi8uu/cache'
 os.environ['TRANSFORMERS_CACHE']=cache_dir
 os.environ['HF_HOME']= cache_dir
 
-from utils import load_and_preprocess_dataset
+from utils import load_and_preprocess_dataset, setup_llama32
 
-def generate_options():
-    vlm_id = "microsoft/Phi-3.5-vision-instruct" 
-    vlm = AutoModelForCausalLM.from_pretrained(
-        vlm_id, 
-        #device_map="cuda",
-        device_map="auto", 
-        trust_remote_code=True, 
-        torch_dtype="auto", 
-        _attn_implementation='flash_attention_2',
-        cache_dir=cache_dir
-    )
+vlm, processor = setup_llama32()
 
-    processor = AutoProcessor.from_pretrained(
-        vlm_id, 
-        trust_remote_code=True, 
-        num_crops=16,
-        cache_dir=cache_dir
-    )
+"""
+vlm_id = "microsoft/Phi-3.5-vision-instruct" 
+vlm = AutoModelForCausalLM.from_pretrained(
+    vlm_id, 
+    #device_map="cuda",
+    device_map="auto", 
+    trust_remote_code=True, 
+    torch_dtype="auto", 
+    #_attn_implementation='flash_attention_2',
+    _attn_implementation='eager',
+    cache_dir=cache_dir
+)
 
-    data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v0")
+processor = AutoProcessor.from_pretrained(
+    vlm_id, 
+    trust_remote_code=True, 
+    num_crops=16,
+    cache_dir=cache_dir
+)
+"""
 
-    system_prompt = """You are an intelligent assistant tasked with generating multiple-choice answers for a Visual Question Answering (VQA) dataset. Your goal is to create 4 choices (including the correct answer) for each question. Ensure that the choices are thoughtfully designed to engage reasoning and critical thinking.
+mcq_system_prompt = """You are an intelligent assistant tasked with generating multiple-choice answers for a Visual Question Answering (VQA) dataset. Your goal is to create 4 choices (including the correct answer) for each question. Ensure that the choices are thoughtfully designed to engage reasoning and critical thinking.
         Here are the detailed instructions for your task:
 
         ### Requirements for Generating Choices:
@@ -45,6 +48,15 @@ def generate_options():
             - All wrong answers should appear plausible and contextually relevant to the question and the image.
         4. **Order**:
             - Randomize the order of the choices.
+            
+        ### Instructions for Yes/No Questions
+        When the answer is binary (Yes/No):
+        1. Include "Yes" and "No" as part of the choices.
+        2. Add two additional plausible but incorrect options, such as: 
+          -"Maybe" or "Possibly, but unlikely."
+          -"It is unclear from the image."
+          -"Not specified."
+        Ensure the additional options are plausible and logically related to the question and image.
 
         ### Input Provided:
         You will be given:
@@ -111,7 +123,86 @@ def generate_options():
         
         Do not hallucinate."""
 
-    print(system_prompt)
+data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v0")
+
+def generate_options():
+    for i, qar in enumerate(data):
+        image = qar["image"]
+        question = qar["question"]
+        correct_answer = qar["answer"]
+        messages = [
+            { "role": "assistant", "content": mcq_system_prompt },
+            {
+                "role": "user", 
+                "content": [
+                    {"type": "image"},
+                    {"type": "text", "text": f'Question: {question}\nCorrect Answer: {correct_answer}\nChoices:\n'}
+                ]
+            },
+        ]
+        
+        input_text = processor.apply_chat_template(messages, add_generation_prompt=True)
+        inputs = processor(
+            image,
+            input_text,
+            add_special_tokens=False,
+            return_tensors="pt"
+        ).to(vlm.device)
+
+        output = vlm.generate(
+            **inputs, 
+            temperature=0.3, 
+            max_new_tokens=300
+        )
+        output = processor.decode(output[0][inputs.input_ids.shape[-1]:])
+        output = output.split('<|eot_id|>')[0]
+        
+        print(output)
+        """
+        messages = [
+            {"role": "system", "content": mcq_system_prompt},
+            {"role": "user", "content": placeholder},
+            {"role": "user", "content": f'Question: {question}\nCorrect Answer: {correct_answer}\nChoices:\n'}
+        ]
+        
+        prompt = processor.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+        
+        inputs = processor(prompt, [image], return_tensors="pt").to(vlm.device) 
+
+        generation_args = { 
+            "max_new_tokens": 500, 
+            "temperature": 0.3, 
+            "do_sample": True,
+        }
+
+        start = time.time()
+        
+        generate_ids = vlm.generate(
+            **inputs, 
+            eos_token_id=processor.tokenizer.eos_token_id,
+            **generation_args
+        )
+
+        generate_ids = generate_ids[:, inputs['input_ids'].shape[1]:]
+        output = processor.batch_decode(
+            generate_ids, 
+            skip_special_tokens=True,
+            clean_up_tokenization_spaces=False
+        )[0]
+        
+        end = time.time()
+        
+        elapsed_time = end - start
+        print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
+        print(output)
+        
+        break
+        """
+          
 
 if __name__ == "__main__":
     generate_options()
