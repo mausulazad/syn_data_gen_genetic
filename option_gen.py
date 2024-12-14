@@ -1,6 +1,14 @@
+import os
+from PIL import Image 
+import requests 
+from transformers import AutoModelForCausalLM 
+from transformers import AutoProcessor 
+
 cache_dir= '/scratch/mi8uu/cache'
 os.environ['TRANSFORMERS_CACHE']=cache_dir
 os.environ['HF_HOME']= cache_dir
+
+from utils import load_and_preprocess_dataset
 
 def generate_options():
     vlm_id = "microsoft/Phi-3.5-vision-instruct" 
@@ -15,14 +23,95 @@ def generate_options():
     )
 
     processor = AutoProcessor.from_pretrained(
-        model_id, 
+        vlm_id, 
         trust_remote_code=True, 
         num_crops=16,
         cache_dir=cache_dir
     )
-    vlm = None
-    processor = None
-    system_prompt
+
+    data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v0")
+
+    system_prompt = """You are an intelligent assistant tasked with generating multiple-choice answers for a Visual Question Answering (VQA) dataset. Your goal is to create 4 choices (including the correct answer) for each question. Ensure that the choices are thoughtfully designed to engage reasoning and critical thinking.
+        Here are the detailed instructions for your task:
+
+        ### Requirements for Generating Choices:
+        1. **Correct Answer**:
+            - If the correct answer is **concise**, include it directly in the list of choices.
+            - If the correct answer is **lengthy**, paraphrase/rephrase it into a shorter version while maintaining its core meaning and accuracy. The shortened version should still fully answer the question.
+        2. **Difficulty Distribution of Wrong Answers**:
+            - One/two wrong answers should be non-trivial, requiring reasoning to eliminate.
+            - The remaining wrong answer(s) can be relatively easy to discard.
+        3. **Plausibility**:
+            - All wrong answers should appear plausible and contextually relevant to the question and the image.
+        4. **Order**:
+            - Randomize the order of the choices.
+
+        ### Input Provided:
+        You will be given:
+            - A **question** describing an aspect of the image.
+            - The **corresponding answer** that is correct for the question.
+            - The **image** to help contextualize the question and answer.
+
+        ### Formatting Requirements:
+        Provide output in the following format:
+
+        Question: <question> 
+        Correct Answer: <correct answer (paraphrased/rephrased if necessary)> 
+        Choices: 
+        a. <choice a> 
+        b. <choice b> 
+        c. <choice c> 
+        d. <choice d> 
+        Correct Answer: <letter of the correct choice (a, b, c, or d)>
+
+        ### Examples:
+        These examples are provided to demonstrate input-output type and structure.**Do not copy-paste the examples; instead, use them as a guide to adapt your analysis based on the provided inputs.**
+
+        **Important Note**: These examples are not necessarily exhaustive and do not encompass all possible cases. Use the examples flexibly, adapting to the inputs provided, rather than forcing the inputs to align with the examples.
+        
+        **Example 1:**
+        Question: What can be inferred about the car based on its appearance? 
+        Correct Answer: The car is red and seems recently painted. 
+        Choices:
+        a. The car is red and seems recently painted.
+        b. The car is old and appears scratched.
+        c. The car is blue and looks brand new.
+        d. The car is red but covered in dust. 
+        Correct Choice: a
+        
+        **Example 2:**
+        Question: What is the person holding in their hand? 
+        Correct Answer: A book. 
+        Choices:
+        a. A phone.
+        b. A cup.
+        c. A bag.
+        d. A book. 
+        Correct Choice: d
+        
+        **Example 3:**
+        Question: Where is the dog sitting? 
+        Correct Answer: On the couch. 
+        Choices: 
+        a. On the floor. 
+        b. Under the table.
+        c. On the couch. 
+        d. Outside in the yard. 
+        Correct Choice: c
+        
+        **Example 4 (Rephrasing/Paraphrasing Needed):**
+        Question: Why are the people gathered in the park?
+        Correct Answer: The people are gathered for a community event with music, food, and activities for everyone.
+        Choices:
+        a. The people are exercising in the park.
+        b. A community event.
+        c. The people are waiting for a parade to start.
+        d. The people are protesting against local policies.
+        Correct Choice: b
+        
+        Do not hallucinate."""
+
+    print(system_prompt)
 
 if __name__ == "__main__":
     generate_options()
