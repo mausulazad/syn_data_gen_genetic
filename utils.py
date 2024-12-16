@@ -680,15 +680,32 @@ def load_json_file(file_name):
     return data
 
 def convert_and_upload_to_hf(qars, repo_name, create_dataset=True):
-    api = HfApi()
-    user_name = api.whoami()["name"]
-    formatted_qars = {key: [qar[key] for qar in qars] for key in qars[0]}
+    if create_dataset:
+        required_keys = { "question", "answer", "rationales" }
+    else:
+        required_keys = { "question", "answer", "rationales", "choices", "correct_choice_idx" }
+        
+    if not isinstance(qars, list) or not all(isinstance(qar, dict) for qar in qars):
+        raise ValueError("Input `qars` must be a list of dictionaries.")
+    if not qars:
+        raise ValueError("Input `qars` cannot be an empty list.")
+
+    validated_qars = []
+    for qar in qars:
+        validated_qars.append({key: qar.get(key, [] if key in {"rationales", "choices"} else "") for key in required_keys})
+
+    
+    formatted_qars = {key: [qar[key] for qar in validated_qars] for key in required_keys}
     dataset = Dataset.from_dict(formatted_qars)
+    
+    # Add synthetic question ID if create_dataset is True
     if create_dataset:
         dataset = dataset.map(
-            lambda qar: {"synthetic_question_id": secrets.token_urlsafe(19)[:25]}
+            lambda qar: {**qar, "synthetic_question_id": secrets.token_urlsafe(19)[:25]}
         )
     
+    api = HfApi()
+    user_name = api.whoami()["name"]
     repo_id=f"{user_name}/{repo_name}"
     api.create_repo(repo_id=repo_id, repo_type="dataset")
     dataset.push_to_hub(repo_id)

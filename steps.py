@@ -83,7 +83,12 @@ def deduplicate_qars(qars):
     seen_qar_hashes = set()
     # step 1: remove exact copies of qars
     for qar in qars:
-        key = f'{qar["question"]}, {qar["answer"]}, {qar["rationales"]}'
+        # To avoid parsing error
+        question = qar.get("question", "")
+        answer = qar.get("answer", "")
+        rationales = qar.get("rationales", "")
+        
+        key = f'{question}, {answer}, {rationales}'
         qar_hash = hashlib.md5(key.encode()).hexdigest()
         if qar_hash not in seen_qar_hashes:
             unique_qars.append(qar)
@@ -93,10 +98,10 @@ def deduplicate_qars(qars):
     nonsimilar_qars = []
     seen_qars = []
     for qar in unique_qars:
-        qar_1_text = f'{qar["question"]}, {qar["answer"]}, {qar["rationales"]}'
+        qar_1_text = f'{qar.get("question", "")}, {qar.get("answer", "")}, {qar.get("rationales", "")}'
         qar_is_duplicate = False
         for seen_qar in seen_qars:
-            qar_2_text = f'{seen_qar["question"]}, {seen_qar["answer"]}, {seen_qar["rationales"]}'
+            qar_2_text = f'{seen_qar.get("question", "")}, {seen_qar.get("answer", "")}, {seen_qar.get("rationales", "")}'
             vectorizer = TfidfVectorizer()
             vectors = vectorizer.fit_transform([qar_1_text, qar_2_text]).toarray()
             cosine_sim = cosine_similarity(vectors)[0, 1]
