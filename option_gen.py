@@ -169,6 +169,7 @@ CHOICE_MAP = {
 }
 
 def generate_options():
+    total_inference_time = 0
     updated_qars = []
     for i, qar in enumerate(data):
         image = qar["image"]
@@ -233,7 +234,7 @@ def generate_options():
         end = time.time()
         
         elapsed_time = end - start
-        print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
+        total_inference_time += elapsed_time
         
         new_fields = {"choices": [], "correct_choice_idx": None}
         output = clean_out_json_output(output)
@@ -246,8 +247,22 @@ def generate_options():
             print(f'Error: Could not parse json object')
             qar["choices"] = []
             qar["correct_choice_idx"] = None
-            
+        
         updated_qars.append(qar)
+
+        """
+        if i % 2 == 1:
+            print(f"options for {i+1} qars are generated...")
+            print(f"No. of qars with options (till now): {len(updated_qars)}")
+            print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
+            print("="*80)
+        """
+
+        if i % 20 == 19:
+            print(f"options for {i+1} qars are generated...")
+            print(f"No. of qars with options (till now): {len(updated_qars)}")
+            print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
+            print("="*80)
         
         
     repo_name = "syn_dataset_no_evolution_single_run_smol_v0_with_choices"
