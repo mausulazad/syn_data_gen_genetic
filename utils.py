@@ -681,10 +681,10 @@ def load_json_file(file_name):
 
 def convert_and_upload_to_hf(qars, repo_name, create_dataset=True):
     if create_dataset:
-        required_keys = { "question", "answer", "rationales" }
+        required_keys = [ "original_question_id", "question", "answer", "rationales", "image" ]
     else:
-        required_keys = { "question", "answer", "rationales", "choices", "correct_choice_idx" }
-        
+        required_keys = [ "original_question_id", "question", "answer", "rationales", "image", "synthetic_question_id", "choices", "correct_choice_idx" ]
+    
     if not isinstance(qars, list) or not all(isinstance(qar, dict) for qar in qars):
         raise ValueError("Input `qars` must be a list of dictionaries.")
     if not qars:
@@ -700,8 +700,13 @@ def convert_and_upload_to_hf(qars, repo_name, create_dataset=True):
     
     # Add synthetic question ID if create_dataset is True
     if create_dataset:
+        """
         dataset = dataset.map(
             lambda qar: {**qar, "synthetic_question_id": secrets.token_urlsafe(19)[:25]}
+        )
+        """
+        dataset = dataset.map(
+            lambda qar: {"synthetic_question_id": secrets.token_urlsafe(19)[:25]}
         )
     
     api = HfApi()

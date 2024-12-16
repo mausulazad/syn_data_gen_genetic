@@ -159,8 +159,6 @@ parser_system_prompt = """You are an assistant tasked with converting structured
     Return only the JSON object. Nothing else.
     DO NOT HALLUCINATE"""
 
-data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v0")
-
 CHOICE_MAP = {
     "a": 0,
     "b": 1,
@@ -169,6 +167,7 @@ CHOICE_MAP = {
 }
 
 def generate_options():
+    data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_small_v2")
     total_inference_time = 0
     updated_qars = []
     for i, qar in enumerate(data):
@@ -264,8 +263,12 @@ def generate_options():
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
         
+        #if i >= 10:
+        #    break
         
-    repo_name = "syn_dataset_no_evolution_single_run_smol_v0_with_choices"
+        
+    #repo_name = "test_op_gen"
+    repo_name = "syn_dataset_no_evolution_single_run_small_v2_with_choices"
     convert_and_upload_to_hf(updated_qars, repo_name, create_dataset=False)
     
 if __name__ == "__main__":
