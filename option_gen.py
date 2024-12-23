@@ -35,94 +35,83 @@ processor = AutoProcessor.from_pretrained(
 )
 """
 
-mcq_system_prompt = """You are an intelligent assistant tasked with generating multiple-choice answers for a Visual Question Answering (VQA) dataset. Your goal is to create 4 choices (including the correct answer) for each question. Ensure that the choices are thoughtfully designed to engage reasoning and critical thinking.
-        Here are the detailed instructions for your task:
+mcq_system_prompt = """You are an intelligent assistant tasked with generating multiple-choice answers for a Visual Question Answering (VQA) dataset. Your goal is to create 4 concise and thoughtfully designed choices (including the correct answer) for each question. 
+    ### Requirements for Generating Choices:
+    1. **Correct Answer**:
+      - If the correct answer is 2/3 words long, include it directly in the list of choices.
+      - If the correct answer have more than 3 words, paraphrase it into a shorter version (2/3 words) that maintains its core meaning. The shortened version should still fully answer the question.
+    2. **One Correct Choice**:
+      - Each question must have **exactly one correct choice**. Ensure that the other choices are all incorrect but plausible.
+    3. **Difficulty Distribution of Wrong Answers**:
+      - Include 1/2 wrong answers that require reasoning to eliminate.
+      - The remaining wrong answer(s) can be easy to discard but still plausible.
+    4. **Plausibility**:
+      - All wrong answers must be plausible and relevant to the question and image.
+    5. **Order**:
+      - Randomize the order of the choices.
 
-        ### Requirements for Generating Choices:
-        1. **Correct Answer**:
-            - If the correct answer is **concise**, include it directly in the list of choices.
-            - If the correct answer is **lengthy**, paraphrase/rephrase it into a shorter version while maintaining its core meaning and accuracy. The shortened version should still fully answer the question.
-        2. **Difficulty Distribution of Wrong Answers**:
-            - One/two wrong answers should be non-trivial, requiring reasoning to eliminate.
-            - The remaining wrong answer(s) can be relatively easy to discard.
-        3. **Plausibility**:
-            - All wrong answers should appear plausible and contextually relevant to the question and the image.
-        4. **Order**:
-            - Randomize the order of the choices.
-            
-        ### Instructions for Yes/No Questions
-        When the answer is binary (Yes/No):
-        1. Include "Yes" and "No" as part of the choices.
-        2. Add two additional plausible but incorrect options, such as: 
-          -"Maybe" or "Possibly, but unlikely."
-          -"It is unclear from the image."
-          -"Not specified."
-        Ensure the additional options are plausible and logically related to the question and image.
+    ### Instructions for Yes/No Questions:
+    1. Include "Yes" and "No" as two of the choices.
+    2. Add two additional plausible but incorrect options, such as:
+      - "Unclear from the image."
+      - "Not specified."
+    3. Ensure all choices are short and logically related to the question and image.
 
-        ### Input Provided:
-        You will be given:
-            - A **question** describing an aspect of the image.
-            - The **corresponding answer** that is correct for the question.
-            - The **image** to help contextualize the question and answer.
+    ### Formatting Requirements:
+    Provide output in the following format:
 
-        ### Formatting Requirements:
-        Provide output in the following format:
+    **Question**: <question>  
+    **Correct Answer**: <correct answer (paraphrased/shortened if necessary)>  
+    **Choices**:  
+    a. <choice a>  
+    b. <choice b>  
+    c. <choice c>  
+    d. <choice d>  
+    **Correct Choice**: <letter of the correct choice (a, b, c, or d)>
 
-        Question: <question> 
-        Correct Answer: <correct answer (paraphrased/rephrased if necessary)> 
-        Choices: 
-        a. <choice a> 
-        b. <choice b> 
-        c. <choice c> 
-        d. <choice d> 
-        Correct Answer: <letter of the correct choice (a, b, c, or d)>
+    ### Updated Examples for Conciseness:
 
-        ### Examples:
-        These examples are provided to demonstrate input-output type and structure.**Do not copy-paste the examples; instead, use them as a guide to adapt your analysis based on the provided inputs.**
+    **Example 1**:  
+    **Question**: What color is the car?  
+    **Correct Answer**: Red.  
+    **Choices**:  
+    a. Blue  
+    b. Red  
+    c. Black  
+    d. Green  
+    **Correct Choice**: b  
 
-        **Important Note**: These examples are not necessarily exhaustive and do not encompass all possible cases. Use the examples flexibly, adapting to the inputs provided, rather than forcing the inputs to align with the examples.
-        
-        **Example 1:**
-        Question: What can be inferred about the car based on its appearance? 
-        Correct Answer: The car is red and seems recently painted. 
-        Choices:
-        a. The car is red and seems recently painted.
-        b. The car is old and appears scratched.
-        c. The car is blue and looks brand new.
-        d. The car is red but covered in dust. 
-        Correct Choice: a
-        
-        **Example 2:**
-        Question: What is the person holding in their hand? 
-        Correct Answer: A book. 
-        Choices:
-        a. A phone.
-        b. A cup.
-        c. A bag.
-        d. A book. 
-        Correct Choice: d
-        
-        **Example 3:**
-        Question: Where is the dog sitting? 
-        Correct Answer: On the couch. 
-        Choices: 
-        a. On the floor. 
-        b. Under the table.
-        c. On the couch. 
-        d. Outside in the yard. 
-        Correct Choice: c
-        
-        **Example 4 (Rephrasing/Paraphrasing Needed):**
-        Question: Why are the people gathered in the park?
-        Correct Answer: The people are gathered for a community event with music, food, and activities for everyone.
-        Choices:
-        a. The people are exercising in the park.
-        b. A community event.
-        c. The people are waiting for a parade to start.
-        d. The people are protesting against local policies.
-        Correct Choice: b
-        
-        DO NOT hallucinate. DO NOT ADD FALSE THINGS TO YOUR RESPONSE"""
+    **Example 2**:  
+    **Question**: What is the person holding?  
+    **Correct Answer**: A book.  
+    **Choices**:  
+    a. A cup  
+    b. A phone  
+    c. A book  
+    d. A bag  
+    **Correct Choice**: c  
+
+    **Example 3**:  
+    **Question**: Where is the dog sitting?  
+    **Correct Answer**: On the couch.  
+    **Choices**:  
+    a. floor  
+    b. couch  
+    c. Under table  
+    d. In the yard  
+    **Correct Choice**: b  
+
+    **Example 4 (Paraphrasing Needed)**:  
+    **Question**: Why are the people in the park?  
+    **Correct Answer**: For a community event.  
+    **Choices**:  
+    a. Exercising  
+    b. A community event  
+    c. Waiting for parade  
+    d. Protesting  
+    **Correct Choice**: b  
+
+    **Key Emphasis**: Keep all choices concise (2/3 words) and contextually relevant while adhering to the rules."""
 
 parser_system_prompt = """You are an assistant tasked with converting structured text containing a question, correct answer,
     choices,and the correct choice into a JSON object. Follow these instructions to format the output correctly:
@@ -167,7 +156,7 @@ CHOICE_MAP = {
 }
 
 def generate_options():
-    data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_small_v2")
+    data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v3")
     total_inference_time = 0
     updated_qars = []
     for i, qar in enumerate(data):
@@ -197,7 +186,7 @@ def generate_options():
 
         output = vlm.generate(
             **inputs, 
-            temperature=0.3, 
+            temperature=0.7, 
             max_new_tokens=300
         )
         output = processor.decode(output[0][inputs.input_ids.shape[-1]:])
@@ -224,7 +213,7 @@ def generate_options():
 
         output = vlm.generate(
             **inputs, 
-            temperature=0.3, 
+            temperature=0.7, 
             max_new_tokens=300
         )
         output = processor.decode(output[0][inputs.input_ids.shape[-1]:])
@@ -263,12 +252,13 @@ def generate_options():
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
         
-        #if i >= 10:
-        #    break
-        
+        """
+        if i >= 10:
+            break
+        """
         
     #repo_name = "test_op_gen"
-    repo_name = "syn_dataset_no_evolution_single_run_small_v2_with_choices"
+    repo_name = "syn_dataset_no_evolution_single_run_smol_v3_with_choices"
     convert_and_upload_to_hf(updated_qars, repo_name, create_dataset=False)
     
 if __name__ == "__main__":
