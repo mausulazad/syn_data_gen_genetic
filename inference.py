@@ -22,7 +22,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # slm = setup_slm()
     # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
     #final_judge = setup_final_judge(model="llava_critic")
-    #juries = setup_jury_poll(["llava_critic", "prometheus_vision"])
+    #juries = setup_jury_poll(["llava_critic"])
     juries = setup_jury_poll(["prometheus_vision"])
 
     """

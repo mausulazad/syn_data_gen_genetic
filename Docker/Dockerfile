@@ -158,8 +158,10 @@ RUN pip install \
     Pillow==10.4.0 \
     requests==2.32.3 \
     scikit-learn==1.3.2 \
-    sentence-transformers==3.2.1 \
-    transformers==4.46.3
+    sentence-transformers==3.2.1
+
+# install modified transformers v4.46.3
+RUN pip install git+https://github.com/MOSHIIUR/transformers.git@main
 
 # Install git-based dependencies for LLaVA
 RUN pip install git+https://github.com/LLaVA-VL/LLaVA-NeXT.git@79ef45a6d8b89b92d7a8525f077c3a3a9894a87d

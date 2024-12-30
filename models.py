@@ -794,6 +794,7 @@ class BackwardReasoner(MLLM):
 
 class FinalJudge:
     def __init__(self, model_name, model, conv_template, processor, tokenizer=None, max_length=None):
+        print("I'm here")
         self.model_name = model_name
         self.model = model
         self.processor = processor

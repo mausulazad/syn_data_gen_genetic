@@ -163,9 +163,8 @@ def setup_prometheus_vision():
         #cache_dir=cache_dir
     )
 
-    #final_judge = FinalJudge("prometheus_vision", model, "llava_v1", image_processor, tokenizer, max_length=context_len)
-    #return final_judge
-    return None
+    final_judge = FinalJudge("prometheus_vision", model, "llava_v1", image_processor, tokenizer, max_length=context_len)
+    return final_judge
 
 JURY_POLL = {
     "llava_critic": setup_llava_critic,
