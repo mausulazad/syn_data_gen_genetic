@@ -11,10 +11,9 @@ from transformers import GenerationConfig
 
 from sentence_transformers import SentenceTransformer, util
 
-from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
-
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
 from llava.conversation import conv_templates, SeparatorStyle
+from llava.mm_utils import process_images, tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
 
 from transformers import pipeline
 
@@ -794,14 +793,17 @@ class BackwardReasoner(MLLM):
         return qars
 
 class FinalJudge:
-    def __init__(self, model, processor, tokenizer=None, max_length=None):
+    def __init__(self, model_name, model, conv_template, processor, tokenizer=None, max_length=None):
+        self.model_name = model_name
         self.model = model
         self.processor = processor
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.device = "cuda"
         self.device_map = "auto"
-        self.conv_template = "qwen_1_5"
+        # "llava_v1" for prometheus vision
+        #self.conv_template = "qwen_1_5"
+        self.conv_template = conv_template
         self.system_prompt = """You will be given an image and a question related to the image. 
 
             Evaluate the quality of the question based on the following **criteria** and assign scores for each criterion on a scale of 0-20:
@@ -812,7 +814,7 @@ class FinalJudge:
             5. Complexity requiring in-depth reasoning.
 
             ### Instructions:
-            1. For each criterion, assign a score (integer value) between 0 and 20, based on how well the question satisfies the criterion.
+            1. For each criterion, assign a score (integer value) between 1 and 5, based on how well the question satisfies the criterion.
             2. Briefly justify the individual criterion scores in one or two sentences.
             4. Identify criteria where the question scored low or failed, with a short explanation.
             5. Suggest a method to evolve (improve) the question to better meet the criteria. Ensure that evolving the question to improve certain aspects does **not compromise or lower the quality of other aspects**.
@@ -840,7 +842,7 @@ class FinalJudge:
     # base-64 encoded image
     def evaluate(self, image, qars):
         # Use LLaVA-Critic
-        if (self.tokenizer is not None) and (self.max_length is not None):
+        if self.model_name == "llava_critic":
             image_tensor = process_images([image], self.processor, self.model.config)
             image_tensor = [_image.to(dtype=torch.float16, device=self.device) for _image in image_tensor]
             #print(image_tensor[0].dtype)
@@ -868,8 +870,36 @@ class FinalJudge:
                 
                 judgement_text = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
                 qars[i]["judgement_details"] = judgement_text
+        elif self.model_name == "prometheus_vision":
+            image_tensor = self.processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
+            for i, qar in qars:
+                query = f'Question (to be judged): {qar["question"]}'
+                conv = conv_templates[self.conv_template].copy()
+                conv.append_message(conv.roles[1], self.system_prompt)
+                conv.append_message(conv.roles[0], query)
+                conv.append_message(conv.roles[1], None)
+                stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
+                input_text = conv.get_prompt()
+                
+                input_ids = tokenizer_image_token(input_text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.model.device)
+                with torch.inference_mode():
+                    outputs = self.model.generate(
+                        input_ids,
+                        images=image_tensor.unsqueeze(0).half().cuda(),
+                        do_sample=True,
+                        temperature=0.1,
+                        num_beams=1,
+                        max_new_tokens=1000,
+                    )
+
+                judgement_text = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
+                judgement_text = judgement_text.strip()
+                if judgement_text.endswith(stop_str):
+                    judgement_text = outputs[:-len(stop_str)]
+                judgement_text = judgement_text.strip()
+                qars[i]["judgement_details"] = judgement_text
         # Use LLaVA-Next
-        else:
+        elif self.model_name == "llava_next":
             for i, qar in enumerate(qars):
                 query = f'Question (to be judged): {qar["question"]}'
                 

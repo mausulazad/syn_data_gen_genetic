@@ -1,6 +1,6 @@
 import argparse
 
-from inference import build_synthetic_dataset, generate_qars
+from inference import build_synthetic_dataset
 
 def main():
     parser = argparse.ArgumentParser(description="A simple argparse example")

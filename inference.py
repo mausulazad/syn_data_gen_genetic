@@ -11,18 +11,21 @@ import sys
 import warnings
 import os
 
-from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, setup_final_judge, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details, convert_and_upload_to_hf
+from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, setup_final_judge, setup_jury_poll, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details, convert_and_upload_to_hf
 
-from steps import generate_qars, evolve_qars, judge_qars, verify_inference, deduplicate_qars, generate_evol_method
+from steps import evolve_qars, judge_qars, verify_inference, deduplicate_qars, activate_jury_poll
 
 
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
-    slm = setup_slm()
-    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    # slm = setup_slm()
+    # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
     #final_judge = setup_final_judge(model="llava_critic")
+    #juries = setup_jury_poll(["llava_critic", "prometheus_vision"])
+    juries = setup_jury_poll(["prometheus_vision"])
 
+    """
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
     #random_i = random.randint(0, len(image_data)-1)
@@ -39,13 +42,11 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     for i, data in enumerate(seed_dataset):
         evol_tries = 0
         evolvable_questions = []
-        """
         evolvable_questions = [
             ('What time of day is it in the image?', 'Add more context or details to increase the complexity without compromising other aspects.'), 
             ('How many suitcases does the man have?', 'No significant evolution is needed for this question as it is already clear and concise. However, if the goal is to increase complexity, one could ask about the total weight of the suitcases or the purpose of the man carrying them, which would require more reasoning and context..'), 
             ("What is the man's destination?", 'To improve the question, add elements that require specific visual details to answer, such as asking about the type of luggage or the specific setting, to enhance complexity without compromising other aspects..')
         ]
-        """
         
         start = time.time()
         syn_qar_bucket = []
@@ -78,9 +79,12 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
 
         synthetic_qars.extend(unique_qars)
         
-        # syn_qars_with_evol = generate_evol_method(final_judge, data["image"], unique_qars)            
+        syn_qars_with_evol = generate_evol_method(final_judge, slm, data["image"], unique_qars)
+
+        for i, qar in enumerate(syn_qars_with_evol):
+            syn_qars_with_evol[i]["judgement_details"] = postprocess_judgement_details(slm, qar["judgement_details"])
             
-        """
+            
         # TODO: Move to 'steps' file
         evolvable_questions = []
         for syn_qar in syn_qars_with_evol:
@@ -95,14 +99,11 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
                 })
             else:
                 evolvable_questions.append((syn_qar["question"], syn_qar["judgement_details"]["evolution_method"]))
-        """
         
-        """
         if len(evolvable_questions) == 0:
             break
         else:
             tries += 1
-        """
 
         if i % 20 == 19:
             print(f"qars for {i+1} images are generated...")
@@ -110,13 +111,11 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
         
-        """
         if i % 2 == 1:
             print(f"qars for {i+1} images are generated...")
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
-        """
         
         if i >= 400:
             break
@@ -126,7 +125,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Store in huggingface repo
     repo_name = "syn_dataset_no_evolution_multi_run_smol_v1"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
-
+    """
 """
 # TODO: Later, make parallel inference calls (as possible)
 def generate_qars(dataset, generator_models, judge_model, br_model):

@@ -33,6 +33,8 @@ from llava.model.builder import load_pretrained_model
 from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
 from llava.conversation import conv_templates, SeparatorStyle
+# from llava.utils import disable_torch_init
+
 
 from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
 
@@ -63,7 +65,6 @@ FEW_SHOT_QUESTIONS = [
     "What might the person in the image do next based on their posture?",
     "How could the objects in the image interact with one another?"
 ]
-
 
 def load_and_preprocess_dataset(dataset_name):
     if dataset_name == "aokvqa":
@@ -133,12 +134,10 @@ def setup_llava():
 
     return (model, processor)
 
-# TODO: Fix bugs
 def setup_llava_critic():
     warnings.filterwarnings("ignore")
     model_id = "lmms-lab/llava-critic-7b"
     model_name = "llava_qwen"
-    device = "cuda"
     device_map = "auto"
     tokenizer, model, image_processor, max_length = load_pretrained_model(
         model_id, 
@@ -146,41 +145,41 @@ def setup_llava_critic():
         model_name, 
         device_map=device_map,
         cache_dir=cache_dir
-    ) 
-
-    #url = "https://github.com/haotian-liu/LLaVA/blob/1a91fc274d7c35a9b50b3cb29c4247ae5837ce39/images/llava_v1_5_radar.jpg?raw=true"
-    #mage = Image.open(requests.get(url, stream=True).raw)
-    #image_tensor = process_images([image], image_processor, model.config)
-    #image_tensor = [_image.to(dtype=torch.float16, device=device) for _image in image_tensor]
-
-    conv_template = "qwen_1_5"
-    question = DEFAULT_IMAGE_TOKEN + "\nWhat is shown in this image?"
-    conv = copy.deepcopy(conv_templates[conv_template])
-    conv.append_message(conv.roles[0], question)
-    conv.append_message(conv.roles[1], None)
-    prompt_question = conv.get_prompt()
-
-    input_ids = tokenizer_image_token(prompt_question, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(device)
-    image_sizes = [image.size]
-
-    cont = model.generate(
-        input_ids,
-        images=image_tensor,
-        image_sizes=image_sizes,
-        do_sample=False,
-        max_new_tokens=300,
     )
-    
-    text_outputs = tokenizer.batch_decode(cont, skip_special_tokens=True)
-    print(text_outputs)
-    
-    tokenizer, model, image_processor, max_length = load_pretrained_model(
+
+    final_judge = FinalJudge("llava_critic", model, "qwen_1_5", image_processor, tokenizer, max_length) 
+    return final_judge
+
+
+def setup_prometheus_vision():
+    model_id = "kaist-ai/prometheus-vision-13b-v1.0"
+    model_name = "llava-v1.5"
+    device_map = "auto"
+    tokenizer, model, image_processor, context_len = load_pretrained_model(
         model_id, 
         None, 
-        model_name, 
-        device_map="auto",
-        cache_dir=cache_dir
+        model_name,
+        device_map=device_map,
+        #cache_dir=cache_dir
     )
+
+    #final_judge = FinalJudge("prometheus_vision", model, "llava_v1", image_processor, tokenizer, max_length=context_len)
+    #return final_judge
+    return None
+
+JURY_POLL = {
+    "llava_critic": setup_llava_critic,
+    "prometheus_vision": setup_prometheus_vision,
+    # TODO: add more judge models
+}
+
+def setup_jury_poll(jury_model_names):
+    juries = []
+    for jury_model_name in jury_model_names:
+        juries.append(JURY_POLL[jury_model_name]())
+    return juries
+
+    
 
 def setup_phi3_vision():
     model_id = "microsoft/Phi-3.5-vision-instruct" 

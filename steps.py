@@ -115,11 +115,44 @@ def deduplicate_qars(qars):
 
     return nonsimilar_qars
 
-
+# TODO: DO NOT call from inference.py
 # Evolution method generation
-def generate_evol_method(final_judge, image, qars):
+def eval_qars(final_judge, slm, image, qars):
+    judgements = []
     qars_with_evol = final_judge.evaluate(image, qars)
-    return qars_with_evol
+    for i, qar in enumerate(qars_with_evol):
+        judgement_details = postprocess_judgement_details(slm, qar["judgement_text"])
+        judgements.append([judgement_details["total_score"], judgement_details["evolution_method"]])
+    scores, evol_methods = zip(*(judgements))
+    return (scores, evol_methods)
+
+def get_jury_verdicts(juries, slm, image, qars):
+    all_scores, all_evol_methods = [], []
+    for jury in juries:
+        judgements = eval_qars(jury, slm, image, qars)
+        all_scores.append(judgements[0])
+        all_evol_methods.append(judgements[1])
+    qars_scores = zip(*all_scores)
+    qars_evol_methods = zip(*all_evol_methods)
+    for i, qar_scores in enumerate(qars_scores):
+        qar_scores = [ 4*qar_score for qar_score in qar_scores ]
+        avg_score = sum(qar_scores) / len(qar_scores)
+        qars[i]["avg_score"] = avg_score
+
+    for i, qar_evol_methods in enumerate(qars_evol_methods):
+        # TODO: synthesize
+        pass
+
+def synthesize_evol_methods(bailiff, evol_methods):
+    pass
+
+def activate_jury_poll(juries, bailiff, slm, image, qars):
+    verdicts = get_jury_verdicts(juries, slm, image, qars)
+    for i, qar in enumerate(qars):
+        evol_methods = [verdict["evol_method"] for verdict in verdicts]
+        permissible_evol_method = synthesize_evol_methods(bailiff, evol_methods)
+        qars[i]["evol_method"] = permissible_evol_method
+    return qars
 
 
 #Evolve QARs
