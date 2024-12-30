@@ -13,28 +13,30 @@ import os
 
 from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, setup_final_judge, setup_jury_poll, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details, convert_and_upload_to_hf
 
-from steps import evolve_qars, judge_qars, verify_inference, deduplicate_qars, activate_jury_poll
+from steps import evolve_qars, judge_qars, verify_inference, deduplicate_qars, activate_jury_poll, get_jury_verdicts
 
 
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
-    # slm = setup_slm()
+    slm = setup_slm()
     # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
     #final_judge = setup_final_judge(model="llava_critic")
     #juries = setup_jury_poll(["llava_critic"])
     juries = setup_jury_poll(["prometheus_vision"])
 
-    """
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
     #random_i = random.randint(0, len(image_data)-1)
-    #image = image_data[random_i]["image"]
+    image = seed_dataset[75]["image"]
     #image = image_data[15572]["image"]
     #image = image_data[9344]["image"]
-
     #TODO: append object with options
     #slm = None
+    
+    get_jury_verdicts(juries, slm, image, [seed_dataset[75]])  
+    
+    """
     synthetic_qars = []
     #slm = None
     #generator_mllms = ["molmo", "llama_32", "llava_32"]
@@ -50,7 +52,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
         
         start = time.time()
         syn_qar_bucket = []
-        max_runs = 3
+        max_runs = 1
         runs = 0
         while runs < max_runs:
             if len(evolvable_questions) == 0:

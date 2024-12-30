@@ -150,18 +150,19 @@ def setup_llava_critic():
     final_judge = FinalJudge("llava_critic", model, "qwen_1_5", image_processor, tokenizer, max_length) 
     return final_judge
 
-
 def setup_prometheus_vision():
     model_id = "kaist-ai/prometheus-vision-13b-v1.0"
     model_name = "llava-v1.5"
-    device_map = "auto"
+    #device_map = "auto"
+    device_map = "cuda"
     tokenizer, model, image_processor, context_len = load_pretrained_model(
         model_id, 
         None, 
         model_name,
         device_map=device_map,
-        #cache_dir=cache_dir
+        cache_dir=cache_dir
     )
+    model = model.to("cuda")
 
     final_judge = FinalJudge("prometheus_vision", model, "llava_v1", image_processor, tokenizer, max_length=context_len)
     return final_judge
@@ -178,7 +179,6 @@ def setup_jury_poll(jury_model_names):
         juries.append(JURY_POLL[jury_model_name]())
     return juries
 
-    
 
 def setup_phi3_vision():
     model_id = "microsoft/Phi-3.5-vision-instruct" 
@@ -589,7 +589,6 @@ def postprocess_judgement_details(slm, judgement_text):
     outputs = slm(messages)
     output = outputs[0]["generated_text"][-1]['content']
     cleaned_output = clean_out_json_output(output)
-    
     valid_aspects = ["commonsense", "physical_world", "visual_understanding", "reasoning", "complexity"]
     try:
         parsed_output = json.loads(cleaned_output)

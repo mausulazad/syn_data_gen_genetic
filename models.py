@@ -794,7 +794,6 @@ class BackwardReasoner(MLLM):
 
 class FinalJudge:
     def __init__(self, model_name, model, conv_template, processor, tokenizer=None, max_length=None):
-        print("I'm here")
         self.model_name = model_name
         self.model = model
         self.processor = processor
@@ -807,7 +806,7 @@ class FinalJudge:
         self.conv_template = conv_template
         self.system_prompt = """You will be given an image and a question related to the image. 
 
-            Evaluate the quality of the question based on the following **criteria** and assign scores for each criterion on a scale of 0-20:
+            Evaluate the quality of the question based on the following **criteria** and assign scores for each criterion on a scale of 1-5:
             1. Commonsense knowledge about human social behavior.
             2. Knowledge of the physical world.
             3. Visual understanding.
@@ -873,14 +872,20 @@ class FinalJudge:
                 qars[i]["judgement_details"] = judgement_text
         elif self.model_name == "prometheus_vision":
             image_tensor = self.processor.preprocess(image, return_tensors='pt')['pixel_values'][0]
-            for i, qar in qars:
-                query = f'Question (to be judged): {qar["question"]}'
+            for i, qar in enumerate(qars):
+                query = f'Question (to be judged): {qar["question"]}\n DO NOT answer the question. Judge its quality based on given instructions and criteria.'
+                if self.model.config.mm_use_im_start_end:
+                    query = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + query
+                else:
+                    query = DEFAULT_IMAGE_TOKEN + '\n' + query
                 conv = conv_templates[self.conv_template].copy()
                 conv.append_message(conv.roles[1], self.system_prompt)
                 conv.append_message(conv.roles[0], query)
                 conv.append_message(conv.roles[1], None)
                 stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
                 input_text = conv.get_prompt()
+                
+                print(input_text)
                 
                 input_ids = tokenizer_image_token(input_text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.model.device)
                 with torch.inference_mode():
