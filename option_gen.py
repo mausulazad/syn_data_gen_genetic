@@ -230,7 +230,14 @@ def generate_options():
         try:
             output = json.loads(output)
             qar["choices"] = output.get("choices", [])
-            qar["correct_choice_idx"] = CHOICE_MAP.get(output.get("correct_choice", None), None)
+            correct_choice = output.get("correct_choice", None)
+            if isinstance(correct_choice, list):
+                if len(correct_choice) == 1:
+                    correct_choice = correct_choice[0]
+                else:
+                    print(f"Warning: `correct_choice` is a list with length {len(correct_choice)}. Skipping this entry.")
+                    correct_choice = None
+            qar["correct_choice_idx"] = CHOICE_MAP.get(correct_choice, None)
         except json.JSONDecodeError:
             print(f'Error: Could not parse json object')
             qar["choices"] = []
