@@ -15,6 +15,8 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from llava.conversation import conv_templates, SeparatorStyle
 from llava.mm_utils import process_images, tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
 
+from qwen_vl_utils import process_vision_info
+
 from transformers import pipeline
 
 GENERATION_CRITERIA = [
@@ -885,8 +887,6 @@ class FinalJudge:
                 stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
                 input_text = conv.get_prompt()
                 
-                print(input_text)
-                
                 input_ids = tokenizer_image_token(input_text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).to(self.model.device)
                 with torch.inference_mode():
                     outputs = self.model.generate(
@@ -904,6 +904,57 @@ class FinalJudge:
                     judgement_text = outputs[:-len(stop_str)]
                 judgement_text = judgement_text.strip()
                 qars[i]["judgement_details"] = judgement_text
+        elif self.model_name == "qwen2_vl":
+            for i, qar in enumerate(qars):
+                query = f'Question (to be judged): {qar["question"]}'
+
+                messages = [
+                    {
+                        "role": "system",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": self.system_prompt
+                            },
+                        ],
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "image": image,
+                            },
+                            {
+                                "type": "text", 
+                                "text": query
+                            },
+                        ],
+                    }
+                ]
+                
+                input_text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+                image_inputs, video_inputs = process_vision_info(messages)
+                inputs = self.processor(
+                    text=[input_text],
+                    images=image_inputs,
+                    videos=video_inputs,
+                    padding=True,
+                    return_tensors="pt",
+                ).to(self.model.device)
+                
+                output = self.model.generate(
+                    **inputs,
+                    temperature=0.1, 
+                    max_new_tokens=1000,
+                )
+                output = [
+                    out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, output)
+                ]
+                
+                judgement_text = self.processor.batch_decode(output, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+                qars[i]["judgement_details"] = judgement_text
+            return qars
         # Use LLaVA-Next
         elif self.model_name == "llava_next":
             for i, qar in enumerate(qars):

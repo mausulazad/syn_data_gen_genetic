@@ -35,8 +35,8 @@ from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_S
 from llava.conversation import conv_templates, SeparatorStyle
 # from llava.utils import disable_torch_init
 
-
 from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
+from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 
 from datasets import load_dataset, Dataset
 from models import MLLM, Judge, BackwardReasoner, FinalJudge
@@ -45,9 +45,9 @@ from models import MLLM, Judge, BackwardReasoner, FinalJudge
 # os.environ['HF_HOME']=f'{pwd}/.cache'
 # cache_dir=f'{pwd}/.cache'
 
-cache_dir= '/scratch/mi8uu/cache'
-os.environ['TRANSFORMERS_CACHE']=cache_dir
-os.environ['HF_HOME']= cache_dir
+#cache_dir= '/scratch/mi8uu/cache'
+#os.environ['TRANSFORMERS_CACHE']=cache_dir
+#os.environ['HF_HOME']= cache_dir
 
 
 CRITERIA = [
@@ -68,7 +68,8 @@ FEW_SHOT_QUESTIONS = [
 
 def load_and_preprocess_dataset(dataset_name):
     if dataset_name == "aokvqa":
-        dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
+        #dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
+        dataset = load_dataset("HuggingFaceM4/A-OKVQA")
         # We are generating synthetic qar by using training data as seed dataset
         # Later we will finetune using test data (and validation data as needed)
     else:
@@ -167,10 +168,31 @@ def setup_prometheus_vision():
     final_judge = FinalJudge("prometheus_vision", model, "llava_v1", image_processor, tokenizer, max_length=context_len)
     return final_judge
 
+def setup_qwen2_vl():
+    model_id = "Qwen/Qwen2-VL-7B-Instruct"
+    
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
+        model_id,
+        torch_dtype="auto",
+        device_map="auto",
+        #cache_dir=cache_dir
+    )
+
+    processor = AutoProcessor.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype='auto',
+        device_map='auto',
+        #cache_dir=cache_dir
+    )
+    
+    final_judge = FinalJudge("qwen2_vl", model, None, processor)
+    return final_judge
+
 JURY_POLL = {
     "llava_critic": setup_llava_critic,
     "prometheus_vision": setup_prometheus_vision,
-    # TODO: add more judge models
+    "qwen2_vl": setup_qwen2_vl
 }
 
 def setup_jury_poll(jury_model_names):

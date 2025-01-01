@@ -23,18 +23,19 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
     #final_judge = setup_final_judge(model="llava_critic")
     #juries = setup_jury_poll(["llava_critic"])
-    juries = setup_jury_poll(["prometheus_vision"])
+    #juries = setup_jury_poll(["prometheus_vision"])
+    juries = setup_jury_poll(["qwen2_vl"])
 
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
     #random_i = random.randint(0, len(image_data)-1)
-    image = seed_dataset[75]["image"]
+    image = seed_dataset[564]["image"]
     #image = image_data[15572]["image"]
     #image = image_data[9344]["image"]
     #TODO: append object with options
     #slm = None
     
-    get_jury_verdicts(juries, slm, image, [seed_dataset[75]])  
+    get_jury_verdicts(juries, slm, image, [seed_dataset[564]])  
     
     """
     synthetic_qars = []
