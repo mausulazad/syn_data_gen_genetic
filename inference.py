@@ -11,12 +11,42 @@ import sys
 import warnings
 import os
 
-from utils import load_and_preprocess_dataset, setup_slm, setup_models, postprocess_qars, setup_final_judge, setup_jury_poll, get_gpu_details, load_json_file, generate_sample_data, postprocess_judgement_details, convert_and_upload_to_hf
+from utils import (
+    load_and_preprocess_dataset,
+    setup_slm,
+    setup_models,
+    postprocess_qars,
+    setup_final_judge,
+    setup_jury_poll,
+    get_gpu_details,
+    load_json_file,
+    generate_sample_data,
+    postprocess_judgement_details,
+    convert_and_upload_to_hf,
+    setup_synthesizer_llm,
+    synthesize_evol_methods,
+)
+
 
 from steps import evolve_qars, judge_qars, verify_inference, deduplicate_qars, activate_jury_poll, get_jury_verdicts
 
 
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
+    synthesizer_llm = setup_synthesizer_llm()
+
+    question = "What is the most likely relationship between the two individuals in the image based on their body language and the surrounding context?"
+    
+    evol_methods = [
+        "Rephrase the question to clarify the reasoning requirement and ensure that it explicitly demands analysis of the scene's visual cues. Add details to improve alignment with reasoning capabilities and complexity.",
+        "Include a follow-up question that probes the interaction between subjects in the image to explore deeper reasoning. Ensure the primary question remains focused on visual understanding while the follow-up question adds depth.",
+        "Simplify the question by reducing its focus to a single concept, such as identifying the most prominent visual detail in the image, to make it easier to evaluate visual understanding. Avoid adding secondary elements."
+    ]    
+
+    method = synthesize_evol_methods(synthesizer_llm, question, evol_methods)
+
+
+    
+    """
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
     slm = setup_slm()
@@ -35,7 +65,8 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     #TODO: append object with options
     #slm = None
     
-    get_jury_verdicts(juries, slm, image, [seed_dataset[564]])  
+    get_jury_verdicts(juries, slm, image, [seed_dataset[564]])
+    """
     
     """
     synthetic_qars = []

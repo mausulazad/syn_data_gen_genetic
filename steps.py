@@ -9,7 +9,7 @@ import numpy as np
 from accelerate import Accelerator
 accelerator = Accelerator()
 
-from utils import postprocess_qars, postprocess_judgement_details
+from utils import postprocess_qars, postprocess_judgement_details, synthesize_evol_methods
 
 # QAR generation
 def generate_qars(generator_mllms, slm, image, image_details):
