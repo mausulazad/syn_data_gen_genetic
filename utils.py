@@ -46,9 +46,9 @@ from models import MLLM, Judge, BackwardReasoner, FinalJudge
 # os.environ['HF_HOME']=f'{pwd}/.cache'
 # cache_dir=f'{pwd}/.cache'
 
-#cache_dir= '/scratch/mi8uu/cache'
-#os.environ['TRANSFORMERS_CACHE']=cache_dir
-#os.environ['HF_HOME']= cache_dir
+cache_dir= '/scratch/mi8uu/cache'
+os.environ['TRANSFORMERS_CACHE']=cache_dir
+os.environ['HF_HOME']= cache_dir
 
 
 CRITERIA = [
@@ -176,7 +176,7 @@ def setup_qwen2_vl():
         model_id,
         torch_dtype="auto",
         device_map="auto",
-        #cache_dir=cache_dir
+        cache_dir=cache_dir
     )
 
     processor = AutoProcessor.from_pretrained(
@@ -184,7 +184,7 @@ def setup_qwen2_vl():
         trust_remote_code=True,
         torch_dtype='auto',
         device_map='auto',
-        #cache_dir=cache_dir
+        cache_dir=cache_dir
     )
     
     final_judge = FinalJudge("qwen2_vl", model, None, processor)
@@ -208,10 +208,11 @@ def setup_synthesizer_llm(model_name="qwen_25"):
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
             torch_dtype="auto",
-            device_map="auto"
+            device_map="auto",
+            cache_dir=cache_dir
         )
         
-        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
     return (model, tokenizer)
 
 def synthesize_evol_methods(llm, question, evol_methods):

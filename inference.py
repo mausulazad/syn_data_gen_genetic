@@ -43,6 +43,8 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     ]    
 
     method = synthesize_evol_methods(synthesizer_llm, question, evol_methods)
+    
+    print(method)
 
 
     
@@ -66,9 +68,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     #slm = None
     
     get_jury_verdicts(juries, slm, image, [seed_dataset[564]])
-    """
     
-    """
     synthetic_qars = []
     #slm = None
     #generator_mllms = ["molmo", "llama_32", "llava_32"]

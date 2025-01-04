@@ -124,12 +124,15 @@ def eval_qars(final_judge, slm, image, qars):
         judgement_details = postprocess_judgement_details(slm, qar["judgement_details"])
         judgements.append([judgement_details["total_score"], judgement_details["evolution_method"]])
     scores, evol_methods = zip(*(judgements))
+    print(scores)
+    print(evol_methods)
     return (scores, evol_methods)
 
 def get_jury_verdicts(juries, slm, image, qars):
     all_scores, all_evol_methods = [], []
     for jury in juries:
         judgements = eval_qars(jury, slm, image, qars)
+        print(judgements)
         all_scores.append(judgements[0])
         all_evol_methods.append(judgements[1])
     qars_scores = zip(*all_scores)
@@ -139,6 +142,7 @@ def get_jury_verdicts(juries, slm, image, qars):
         avg_score = sum(qar_scores) / len(qar_scores)
         qars[i]["avg_score"] = avg_score
 
+    print(qars)
     """
     for i, qar_evol_methods in enumerate(qars_evol_methods):
         # TODO: synthesize

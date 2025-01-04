@@ -245,27 +245,25 @@ def generate_options():
         
         updated_qars.append(qar)
 
-        """
         if i % 2 == 1:
             print(f"options for {i+1} qars are generated...")
             print(f"No. of qars with options (till now): {len(updated_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
-        """
 
+        """
         if i % 20 == 19:
             print(f"options for {i+1} qars are generated...")
             print(f"No. of qars with options (till now): {len(updated_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
-        
         """
-        if i >= 10:
+        
+        if i >= 8:
             break
-        """
         
-    #repo_name = "test_op_gen"
-    repo_name = "syn_dataset_no_evolution_single_run_smol_v3_with_choices"
+    repo_name = "test_op_gen"
+    #repo_name = "syn_dataset_no_evolution_single_run_smol_v3_with_choices"
     convert_and_upload_to_hf(updated_qars, repo_name, create_dataset=False)
     
 if __name__ == "__main__":
