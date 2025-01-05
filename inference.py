@@ -26,59 +26,44 @@ from utils import (
     setup_synthesizer_llm,
 )
 
+from option_gen import generate_options
 
 from steps import evolve_qars, judge_qars, verify_inference, deduplicate_qars, activate_jury_poll, get_jury_verdicts
 
 
 def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
-    """
-    question = "What is the most likely relationship between the two individuals in the image based on their body language and the surrounding context?"
-    
-    evol_methods = [
-        "Rephrase the question to clarify the reasoning requirement and ensure that it explicitly demands analysis of the scene's visual cues. Add details to improve alignment with reasoning capabilities and complexity.",
-        "Include a follow-up question that probes the interaction between subjects in the image to explore deeper reasoning. Ensure the primary question remains focused on visual understanding while the follow-up question adds depth.",
-        "Simplify the question by reducing its focus to a single concept, such as identifying the most prominent visual detail in the image, to make it easier to evaluate visual understanding. Avoid adding secondary elements."
-    ]    
-
-    method = synthesize_evol_methods(synthesizer_llm, question, evol_methods)
-    
-    print(method)
-    """
-
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
     slm = setup_slm()
-    # generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
-    #final_judge = setup_final_judge(model="llava_critic")
+    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    final_judge = setup_final_judge(model="llava_critic")
     #juries = setup_jury_poll(["prometheus_vision"])
-    juries = setup_jury_poll(["llava_critic", "qwen2_vl"])
+    #juries = setup_jury_poll(["llava_critic", "qwen2_vl"])
+    juries = setup_jury_poll(["llava_critic", "qwen2_vl", "prometheus_vision"])
     synthesizer = setup_synthesizer_llm()
 
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
     #random_i = random.randint(0, len(image_data)-1)
-    image = seed_dataset[564]["image"]
-    #TODO: append object with options
+    #image = seed_dataset[564]["image"]
     
-    get_jury_verdicts(juries, slm, synthesizer, image, [seed_dataset[564]])
-    
-    """
     synthetic_qars = []
     #slm = None
     #generator_mllms = ["molmo", "llama_32", "llava_32"]
     total_inference_time = 0
     for i, data in enumerate(seed_dataset):
-        evol_tries = 0
         evolvable_questions = []
+        """
         evolvable_questions = [
             ('What time of day is it in the image?', 'Add more context or details to increase the complexity without compromising other aspects.'), 
             ('How many suitcases does the man have?', 'No significant evolution is needed for this question as it is already clear and concise. However, if the goal is to increase complexity, one could ask about the total weight of the suitcases or the purpose of the man carrying them, which would require more reasoning and context..'), 
             ("What is the man's destination?", 'To improve the question, add elements that require specific visual details to answer, such as asking about the type of luggage or the specific setting, to enhance complexity without compromising other aspects..')
         ]
+        """
         
         start = time.time()
         syn_qar_bucket = []
-        max_runs = 1
+        max_runs = 3
         runs = 0
         while runs < max_runs:
             if len(evolvable_questions) == 0:
@@ -94,44 +79,52 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
                 for qar in syn_qars_details[mllm]:
                     #if (syn_qars_details[mllm][qar]["br_score"] > 0.7):
                     syn_qar_bucket.append(syn_qars_details[mllm][qar])
+
+            # De-duplicate initially filtered qars
+            unique_qars = deduplicate_qars(syn_qar_bucket)
+        
+            """
+            end = time.time()
+        
+            elapsed_time = end - start
+            #print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
+            total_inference_time += elapsed_time
+            """
+
+            #synthetic_qars.extend(unique_qars)
+        
+            syn_qars_with_evol = get_jury_verdicts(juries, slm, synthesizer, data["image"], unique_qars)
+            #syn_qars_with_evol = generate_evol_method(final_judge, slm, data["image"], unique_qars)
+
+            """
+            for i, qar in enumerate(syn_qars_with_evol):
+                syn_qars_with_evol[i]["judgement_details"] = postprocess_judgement_details(slm, qar["judgement_details"])
+            """
+            
+            
             runs += 1
 
-        # De-duplicate initially filtered qars
-        unique_qars = deduplicate_qars(syn_qar_bucket)
+            # TODO: Move to 'steps' file
+            evolvable_questions = []
+            for syn_qar in syn_qars_with_evol:
+                if (syn_qar["avg_score"] >= 90) or ((runs == max_runs) and (syn_qar["avg_score"] >= 75)):
+                    image, question, direct_answer = data["image"], syn_qar["question"], syn_qar["answer"]
+                    # TODO: Check option gen and qar object update's effect on hf upload util function, bugs may exist
+                    choices, correct_choice_idx = generate_options(image, question, direct_answer)
+                    synthetic_qars.append({
+                        "original_question_id": data["id"],
+                        "image": image,
+                        "question": question,
+                        "direct_answer": direct_answer,
+                        "choices": choices,
+                        "correct_choice_idx": correct_choice_idx
+                    })
+                else:
+                    if syn_qar["evol_method"] != "Not given":
+                        evolvable_questions.append((syn_qar["question"], syn_qar["evol_method"]))
         
-        end = time.time()
-        
-        elapsed_time = end - start
-        #print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
-        total_inference_time += elapsed_time
-
-        synthetic_qars.extend(unique_qars)
-        
-        syn_qars_with_evol = generate_evol_method(final_judge, slm, data["image"], unique_qars)
-
-        for i, qar in enumerate(syn_qars_with_evol):
-            syn_qars_with_evol[i]["judgement_details"] = postprocess_judgement_details(slm, qar["judgement_details"])
-            
-            
-        # TODO: Move to 'steps' file
-        evolvable_questions = []
-        for syn_qar in syn_qars_with_evol:
-            if syn_qar["judgement_details"]["total_score"] >= 80:
-                # TODO choices = generate_options(slm, question, answer)
-                synthetic_qars.append({
-                    "id": data["id"],
-                    "image": data["image"],
-                    "question": syn_qar["question"],
-                    "direct_answer": syn_qar["answer"],
-                    #"choices": choices
-                })
-            else:
-                evolvable_questions.append((syn_qar["question"], syn_qar["judgement_details"]["evolution_method"]))
-        
-        if len(evolvable_questions) == 0:
-            break
-        else:
-            tries += 1
+            if len(evolvable_questions) == 0:
+                break
 
         if i % 20 == 19:
             print(f"qars for {i+1} images are generated...")
@@ -139,6 +132,7 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
         
+        """
         if i % 2 == 1:
             print(f"qars for {i+1} images are generated...")
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
@@ -149,11 +143,13 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             break
         #print(len(synthetic_qars))
         #break
+        """
 
     # Store in huggingface repo
+    # TODO: Change repo name
     repo_name = "syn_dataset_no_evolution_multi_run_smol_v1"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
-    """
+
 """
 # TODO: Later, make parallel inference calls (as possible)
 def generate_qars(dataset, generator_models, judge_model, br_model):

@@ -139,12 +139,17 @@ def get_jury_verdicts(juries, slm, synthesizer, image, qars):
         qar_scores = [ 4*qar_score for qar_score in qar_scores if qar_score != -1]
         avg_score = sum(qar_scores) / len(qar_scores)
         qars[i]["avg_score"] = avg_score
-
+    
     for i, qar_evol_methods in enumerate(qars_evol_methods):
-        # TODO: synthesize
+        # synthesize evol methods
         qar_evol_methods = [qar_evol_method for qar_evol_method in qar_evol_methods if qar_evol_method != "Not given"]
-        synthesized_evol_method = synthesize_evol_methods(synthesizer, qars[i]["question"], qar_evol_methods)
-        print(synthesized_evol_method)
+        if len(qar_evol_methods) > 0:
+            synthesized_evol_method = synthesize_evol_methods(synthesizer, qars[i]["question"], qar_evol_methods)
+            qars[i]["evol_method"] = synthesized_evol_method
+        else:
+            qars[i]["evol_method"] = None
+  
+    return qars
 
 def activate_jury_poll(juries, bailiff, slm, image, qars):
     verdicts = get_jury_verdicts(juries, slm, image, qars)

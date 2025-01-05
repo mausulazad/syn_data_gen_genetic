@@ -209,10 +209,14 @@ def setup_synthesizer_llm(model_name="qwen_25"):
             model_id,
             torch_dtype="auto",
             device_map="auto",
-            cache_dir=cache_dir
+            #cache_dir=cache_dir
         )
         
-        tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_id, 
+            #cache_dir=cache_dir
+        )
+
     return (model, tokenizer)
 
 def synthesize_evol_methods(llm, question, evol_methods):
@@ -260,7 +264,9 @@ def synthesize_evol_methods(llm, question, evol_methods):
         Briefly explain how the preferred method was prioritized and how the other methods (if any) were used to enhance it.
 
         - **Synthesized Evolution Method**:
-        Present the final synthesized evolution method as a clear, brief, concise, and actionable paragraph. Ensure the evolution method is focused on improving the question and does not include the evolved question itself."""
+        Present the final synthesized evolution method as a clear, brief, concise, and actionable paragraph. Ensure the evolution method is focused on improving the question and does not include the evolved question itself.
+        
+        Make sure that '### Synthesized Evolution Method:' is always placed prior to stating the method."""
     
     model, tokenizer = llm
     
@@ -269,8 +275,6 @@ def synthesize_evol_methods(llm, question, evol_methods):
     evol_methods = "\n".join(f"Evolution Method {i + 1}: {evol_method}" for i, evol_method in enumerate(evol_methods))
     query = f'Here is the question: {question}.\n And here are the evolution methods:\n{evol_methods}\n'
     
-    print(query)
-    """
     messages = [
         { "role": "system", "content": system_prompt },
         { "role": "user", "content": query }
@@ -284,21 +288,27 @@ def synthesize_evol_methods(llm, question, evol_methods):
     
     model_inputs = tokenizer([input_text], return_tensors="pt").to(model.device)
 
-    generated_ids = model.generate(
-        **model_inputs,
-        temperature=0.3,
-        max_new_tokens=350
-    )
+    tries = 1
+    final_evol_method = None
+    while tries <= 3:
+        generated_ids = model.generate(
+            **model_inputs,
+            temperature=0.3,
+            max_new_tokens=350
+        )
         
-    generated_ids = [
-        output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-    ]
+        generated_ids = [
+            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+        ]
 
-    synthesized_evol_method = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    return synthesized_evol_method
-    """
-    return None
-
+        synthesized_evol_method = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        splits = synthesized_evol_method.split("### Synthesized Evolution Method:")
+        if len(splits) == 2:
+            final_evol_method = splits[1].strip()
+            break
+        else:
+            tries += 1
+    return final_evol_method
 
 
 def setup_phi3_vision():

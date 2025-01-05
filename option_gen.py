@@ -155,11 +155,97 @@ CHOICE_MAP = {
     "d": 3
 }
 
-def generate_options():
-    data = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v3")
+def generate_options(image, question, answer):
+    correct_answer = answer
+
+    start = time.time()
+    messages = [
+        { "role": "assistant", "content": mcq_system_prompt },
+        {
+            "role": "user", 
+            "content": [
+                { "type": "image" },
+                { "type": "text", "text": f'Question: {question}\nCorrect Answer: {correct_answer}\nChoices:\n' }
+            ]
+        },
+    ]
+        
+    input_text = processor.apply_chat_template(messages, add_generation_prompt=True)
+    inputs = processor(
+        image,
+        input_text,
+        add_special_tokens=False,
+        return_tensors="pt"
+    ).to(vlm.device)
+
+    output = vlm.generate(
+        **inputs, 
+        temperature=0.7, 
+        max_new_tokens=300
+    )
+    output = processor.decode(output[0][inputs.input_ids.shape[-1]:])
+    output = output.split('<|eot_id|>')[0]
+        
+    messages = [
+        { "role": "assistant", "content": parser_system_prompt },
+        {
+            "role": "user", 
+            "content": [
+                { "type": "image" },
+                { "type": "text", "text": output}
+            ]
+        },
+    ]
+        
+    input_text = processor.apply_chat_template(messages, add_generation_prompt=True)
+    inputs = processor(
+        image,
+        input_text,
+        add_special_tokens=False,
+        return_tensors="pt"
+    ).to(vlm.device)
+
+    output = vlm.generate(
+        **inputs, 
+        temperature=0.7, 
+        max_new_tokens=300
+    )
+    output = processor.decode(output[0][inputs.input_ids.shape[-1]:])
+    output = output.split('<|eot_id|>')[0]
+        
+    end = time.time()
+        
+    elapsed_time = end - start
+    total_inference_time += elapsed_time
+        
+    new_fields = {"choices": [], "correct_choice_idx": None}
+    output = clean_out_json_output(output)
+
+    try:
+        output = json.loads(output)
+        choices = output.get("choices", [])
+        correct_choice = output.get("correct_choice", None)
+        if isinstance(correct_choice, list):
+            if len(correct_choice) == 1:
+                correct_choice = correct_choice[0]
+            else:
+                print(f"Warning: `correct_choice` is a list with length {len(correct_choice)}. Skipping this entry.")
+                correct_choice = None
+        correct_choice_idx = CHOICE_MAP.get(correct_choice, None)
+    except json.JSONDecodeError:
+        print(f'Error: Could not parse json object')
+        choices = []
+        correct_choice_idx = None
+    
+    return (choices, correct_choice_idx)
+
+
+"""
+def generate_options(qars):
+    #qars = load_and_preprocess_dataset("Mausul/syn_dataset_no_evolution_single_run_smol_v3")
     total_inference_time = 0
     updated_qars = []
-    for i, qar in enumerate(data):
+    for i, qar in enumerate(qars):
         image = qar["image"]
         question = qar["question"]
         correct_answer = qar["answer"]
@@ -251,13 +337,11 @@ def generate_options():
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
 
-        """
         if i % 20 == 19:
             print(f"options for {i+1} qars are generated...")
             print(f"No. of qars with options (till now): {len(updated_qars)}")
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
-        """
         
         if i >= 8:
             break
@@ -268,3 +352,4 @@ def generate_options():
     
 if __name__ == "__main__":
     generate_options()
+"""
