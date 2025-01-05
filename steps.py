@@ -124,33 +124,27 @@ def eval_qars(final_judge, slm, image, qars):
         judgement_details = postprocess_judgement_details(slm, qar["judgement_details"])
         judgements.append([judgement_details["total_score"], judgement_details["evolution_method"]])
     scores, evol_methods = zip(*(judgements))
-    print(scores)
-    print(evol_methods)
     return (scores, evol_methods)
 
-def get_jury_verdicts(juries, slm, image, qars):
+def get_jury_verdicts(juries, slm, synthesizer, image, qars):
     all_scores, all_evol_methods = [], []
-    for jury in juries:
+    for i, jury in enumerate(juries):
+        #print(f"JURY {i+1}:")
         judgements = eval_qars(jury, slm, image, qars)
-        print(judgements)
         all_scores.append(judgements[0])
         all_evol_methods.append(judgements[1])
     qars_scores = zip(*all_scores)
     qars_evol_methods = zip(*all_evol_methods)
     for i, qar_scores in enumerate(qars_scores):
-        qar_scores = [ 4*qar_score for qar_score in qar_scores ]
+        qar_scores = [ 4*qar_score for qar_score in qar_scores if qar_score != -1]
         avg_score = sum(qar_scores) / len(qar_scores)
         qars[i]["avg_score"] = avg_score
 
-    print(qars)
-    """
     for i, qar_evol_methods in enumerate(qars_evol_methods):
         # TODO: synthesize
-        pass
-    """
-
-def synthesize_evol_methods(bailiff, evol_methods):
-    pass
+        qar_evol_methods = [qar_evol_method for qar_evol_method in qar_evol_methods if qar_evol_method != "Not given"]
+        synthesized_evol_method = synthesize_evol_methods(synthesizer, qars[i]["question"], qar_evol_methods)
+        print(synthesized_evol_method)
 
 def activate_jury_poll(juries, bailiff, slm, image, qars):
     verdicts = get_jury_verdicts(juries, slm, image, qars)

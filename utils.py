@@ -269,6 +269,8 @@ def synthesize_evol_methods(llm, question, evol_methods):
     evol_methods = "\n".join(f"Evolution Method {i + 1}: {evol_method}" for i, evol_method in enumerate(evol_methods))
     query = f'Here is the question: {question}.\n And here are the evolution methods:\n{evol_methods}\n'
     
+    print(query)
+    """
     messages = [
         { "role": "system", "content": system_prompt },
         { "role": "user", "content": query }
@@ -294,6 +296,8 @@ def synthesize_evol_methods(llm, question, evol_methods):
 
     synthesized_evol_method = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
     return synthesized_evol_method
+    """
+    return None
 
 
 
@@ -709,13 +713,21 @@ def postprocess_judgement_details(slm, judgement_text):
     valid_aspects = ["commonsense", "physical_world", "visual_understanding", "reasoning", "complexity"]
     try:
         parsed_output = json.loads(cleaned_output)
-        total_score = sum(
-            parsed_output["scores"][aspect]["value"] for aspect in valid_aspects if aspect in parsed_output["scores"]
-        )
-        parsed_output["total_score"] = total_score
+        if "scores" in parsed_output:
+            total_score = sum(
+                parsed_output["scores"][aspect]["value"] for aspect in valid_aspects if aspect in parsed_output["scores"]
+            )
+            parsed_output["total_score"] = total_score
+        else:
+            # Do not consider the score 
+            parsed_output["total_score"] = -1
+        parsed_output["evolution_method"] = "Not given" if "evolution_method" not in parsed_output else parsed_output["evolution_method"]
     except json.JSONDecodeError:
         print(f'Error: Could not parse syn_qar')
-        parsed_output = None
+        parsed_output = {
+            "total_score": -1,
+            "evolution_method": "Not given"
+        }
 
     return parsed_output
 
