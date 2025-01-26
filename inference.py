@@ -11,10 +11,15 @@ import sys
 import warnings
 import os
 
+#from multiprocess import set_start_method
+import torch.multiprocessing as mp
+from torch.utils.data import DataLoader
+
 from utils import (
     load_and_preprocess_dataset,
     setup_slm,
-    setup_models,
+    #setup_models,
+    setup_generator_models,
     postprocess_qars,
     setup_final_judge,
     setup_jury_poll,
@@ -24,23 +29,249 @@ from utils import (
     postprocess_judgement_details,
     convert_and_upload_to_hf,
     setup_synthesizer_llm,
+    synthesize_evol_methods,
+    upload_batch_to_hub
 )
 
-from option_gen import generate_options
+#from option_gen import generate_options
 
-from steps import evolve_qars, judge_qars, verify_inference, deduplicate_qars, activate_jury_poll, get_jury_verdicts
+from steps import generate_qars, evolve_qars, judge_qars, eval_qars, verify_inference, deduplicate_qars, activate_jury_poll, get_jury_verdicts
+
+model_card = [
+    # slm
+    {
+        "name": "slm",
+        "model_id": "meta-llama/Llama-3.2-3B-Instruct",
+        "device": "cpu"
+    },
+    # generator mllms
+    {
+        "name": "llama_32",
+        "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+        "device": "cpu"
+    },
+    {
+        "name": "llava_next",
+        "model_id": "llava-hf/llava-v1.6-mistral-7b-hf",
+        "device": "cpu"
+    },
+    {
+        "name": "molmo",
+        "model_id": "allenai/Molmo-7B-D-0924",
+        "device": "cpu"
+    },
+    # jury mllms
+    {
+        "name": "llava_critic",
+        "model_id": "lmms-lab/llava-critic-7b",
+        "device": "cpu"
+    },
+    {
+        "name": "prometheus_vision",
+        "model_id": "kaist-ai/prometheus-vision-13b-v1.0",
+        "device": "cpu"
+    },
+    {
+        "name": "qwen2_vl",
+        "model_id": "Qwen/Qwen2-VL-7B-Instruct",
+        "device": "cpu"
+    },
+    # synthesizer llm
+    {
+        "name": "qwen_25",
+        "model_id": "Qwen/Qwen2.5-7B-Instruct",
+        "device": "cpu"
+    }
+]
+
+slm, generator_mllms, jury_mllms, synthesizer = None, [], [], None
+
+def allocate_gpu(model_card):
+    devices = torch.cuda.device_count()
+    if devices > 0:
+        for i, _ in enumerate(model_card):
+            model_card[i]["device"] = f"cuda:{(i) % devices}"
+    return model_card
+
+def config_models(model_card, generator_model_names, jury_model_names):
+    # Distribute available gpus to models
+    model_card = allocate_gpu(model_card)
+        
+    # Load models (need to do this for each distinct process, since processes can not access parent process variables)
+    slm = setup_slm("slm", model_card)
+    generator_mllms = setup_generator_models(generator_model_names, model_card)
+    jury_mllms = setup_jury_poll(jury_model_names, model_card)
+    synthesizer = setup_synthesizer_llm("qwen_25", model_card)
+    
+    return {
+        "parser": slm,
+        "generator_mllms": generator_mllms,
+        "jury_mllms": jury_mllms,
+        "synthesizer": synthesizer
+    }
+
+def build_dataset(dataset, generator_model_names, jury_model_names):
+    # Load aokvqa/scienceqa dataset
+    seed_dataset = load_and_preprocess_dataset(dataset)
+    
+    gen_model_count = sum(1 for model in model_card if model.get("name") in generator_model_names)
+    jury_model_count = sum(1 for model in model_card if model.get("name") in jury_model_names)
+    slm_model_exists = any(model.get("name") == "slm" for model in model_card)
+    synthesizer_model_exists = any(model.get("name") == "qwen_25" for model in model_card)
+    
+    if ((gen_model_count == len(generator_model_names)) and (jury_model_count == len(jury_model_names)) and slm_model_exists and synthesizer_model_exists):
+        print("1 or more given models' config details is not available.")
+        return
+
+    batch_size = 2
+    for batch_num, batch_output in enumerate(
+        seed_dataset.map(
+            build_synthetic_dataset,
+            batched=True,
+            batch_size=batch_size,
+            with_rank=True,
+            num_proc=torch.cuda.device_count(),
+            fn_kwargs={
+                "model_card": model_card,
+                "generator_model_names": generator_model_names,
+                "jury_model_names": jury_model_names
+            }
+        )
+    ):
+        upload_batch_to_hub(
+            batch_num,
+            batch_output=batch_output,
+            # TODO: replace with a original repo name
+            repo_name="username/repository-name",
+            private=True
+        )
 
 
-def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
+def build_synthetic_dataset(batch, rank, model_card, generator_model_names, jury_model_names):
+    try:
+        mp.set_start_method("spawn", force=True)  # Ensure correct start method
+    except RuntimeError:
+        pass  # Ignore if already set
+    
+    model_details = config_models(model_card, generator_model_names, jury_model_names)
+    
+    manager = mp.Manager()
+    
+    parser = model_details["parser"]
+    generator_mllms = model_details["generator_mllms"]
+    jury_mllms = model_details["jury_mllms"]
+    synthesizer = model_details["synthesizer"]
+    
+    quality_qars = []
+    evolvable_questions = []
+    max_tries = 3
+    current_try = 1
+    while current_try <= max_tries:
+        # shared across all processes
+        qars = manager.list()
+        
+        processes = []
+        for process_id, model in enumerate(generator_mllms):
+            if len(evolvable_questions) == 0:
+                p = mp.Process(target=generate_qars, args=(process_id, batch, model, qars, parser))
+                p.start()
+                processes.append(p)
+            else:
+                p = mp.Process(target=evolve_qars, args=(process_id, evolvable_questions, model, qars, parser))
+                p.start()
+                processes.append(p)
+
+        for p in processes:
+            p.join()
+
+        all_qars = []
+        for process_id, image, syn_qars in qars:
+            #print(f"[RESULT] Process {process_id}: {model_name} -> '{input_text}' => '{output_text}'")
+            for qar in syn_qars:
+                all_qars.append((process_id, image, qar))
+
+        # TODO push code (comment out, not remove)
+
+        evolvable_questions = []
+        for idx, qar_details in enumerate(all_qars):
+            _, image, qar = qar_details
+            evol_methods = manager.list()
+            jury_processes = []
+            for process_id, model in enumerate(jury_mllms):
+                p = mp.Process(target=eval_qars, args=(process_id, qar_details, model, evol_methods, parser))
+                p.start()
+                jury_processes.append(p)
+
+            for p in jury_processes:
+                p.join()
+
+            evolution_methods = []
+            scores = []
+            for evol_method_details in evol_methods:
+                if evol_method_details["evolution_method"] != "Not given" and evol_method_details["total_score"] != -1:
+                    evolution_methods.append(evol_method_details["evolution_method"])
+                    scores.append(evol_method_details["total_score"])
+        
+            jury_score = 0
+            if len(scores) > 0:
+                jury_score = sum(scores)/len(scores)
+
+            # synthesize evol_methods
+            synthesized_evol_method = synthesize_evol_methods(synthesizer, qar.get("question", "None generated"), evolution_methods)
+            
+            if jury_score > 90:
+                quality_qars.append({
+                    "question": qar.get("question", "None generated"),
+                    "answer": qar.get("answer", "None generated"),
+                    "rationales": qar.get("rationales", "None generated"),
+                    "image": image,
+                    "jury_score": jury_score,
+                    "evol_method": synthesized_evol_method
+                })
+            else:
+                evolvable_questions.append({
+                    "question": qar.get("question", "None generated"),
+                    "answer": qar.get("answer", "None generated"),
+                    "rationales": qar.get("rationales", "None generated"),
+                    "image": image,
+                    "jury_score": jury_score,
+                    "evol_method": synthesized_evol_method
+                
+                })
+            
+        if len(evolvable_questions) == 0:
+            break
+ 
+        current_try += 1
+
+    if len(quality_qars) == 0: 
+        qar_map = {key: [item[key] for item in quality_qars] 
+                          for key in quality_qars[0]}
+    else:
+        qar_map = {
+            "question": [],
+            "answer": [],
+            "rationales": [],
+            "image": [],
+            "jury_score": [],
+            "evol_method": []
+        }
+    
+    return qar_map
+    #return quality_qars
+    
+
+"""
+#def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     # Load MLLMs
     # Setup a SLM (Llama-3.2 1B/3B) for output structure related post-processing
     slm = setup_slm()
-    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model)
+    generator_mllms, judge_mllm, br_mllm = setup_models(generator_models, judge_model, br_model, model_card)
     final_judge = setup_final_judge(model="llava_critic")
     #juries = setup_jury_poll(["prometheus_vision"])
     #juries = setup_jury_poll(["llava_critic", "qwen2_vl"])
-    juries = setup_jury_poll(["llava_critic", "qwen2_vl", "prometheus_vision"])
-    synthesizer = setup_synthesizer_llm()
+    juries = setup_jury_poll(["llava_critic", "qwen2_vl", "prometheus_vision"], model_card)
+    synthesizer = setup_synthesizer_llm("qwen_25", model_card)
 
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
@@ -53,13 +284,11 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
     total_inference_time = 0
     for i, data in enumerate(seed_dataset):
         evolvable_questions = []
-        """
         evolvable_questions = [
             ('What time of day is it in the image?', 'Add more context or details to increase the complexity without compromising other aspects.'), 
             ('How many suitcases does the man have?', 'No significant evolution is needed for this question as it is already clear and concise. However, if the goal is to increase complexity, one could ask about the total weight of the suitcases or the purpose of the man carrying them, which would require more reasoning and context..'), 
             ("What is the man's destination?", 'To improve the question, add elements that require specific visual details to answer, such as asking about the type of luggage or the specific setting, to enhance complexity without compromising other aspects..')
         ]
-        """
         
         start = time.time()
         syn_qar_bucket = []
@@ -83,23 +312,19 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             # De-duplicate initially filtered qars
             unique_qars = deduplicate_qars(syn_qar_bucket)
         
-            """
             end = time.time()
         
             elapsed_time = end - start
             #print(f"Inference time for {i+1} image(s): {elapsed_time:.2f} seconds")
             total_inference_time += elapsed_time
-            """
 
             #synthetic_qars.extend(unique_qars)
         
             syn_qars_with_evol = get_jury_verdicts(juries, slm, synthesizer, data["image"], unique_qars)
             #syn_qars_with_evol = generate_evol_method(final_judge, slm, data["image"], unique_qars)
 
-            """
             for i, qar in enumerate(syn_qars_with_evol):
                 syn_qars_with_evol[i]["judgement_details"] = postprocess_judgement_details(slm, qar["judgement_details"])
-            """
             
             
             runs += 1
@@ -132,7 +357,6 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             print(f"Total inference time (till now): {total_inference_time/60:.2f} min(s)")
             print("="*80)
         
-        """
         if i % 2 == 1:
             print(f"qars for {i+1} images are generated...")
             print(f"No. of qars generated (till now): {len(synthetic_qars)}")
@@ -143,12 +367,13 @@ def build_synthetic_dataset(dataset, generator_models, judge_model, br_model):
             break
         #print(len(synthetic_qars))
         #break
-        """
+        
 
     # Store in huggingface repo
     # TODO: Change repo name
     repo_name = "syn_dataset_no_evolution_multi_run_smol_v1"
     convert_and_upload_to_hf(synthetic_qars, repo_name)
+"""
 
 """
 # TODO: Later, make parallel inference calls (as possible)

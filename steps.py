@@ -11,6 +11,29 @@ accelerator = Accelerator()
 
 from utils import postprocess_qars, postprocess_judgement_details, synthesize_evol_methods
 
+def generate_qars(process_id, batch, model, qars, parser):
+    for idx, image_details in enumerate(batch):
+        image = image_details["image"]
+        #print(f"[DEBUG] Process {process_id}: Model {model_name} processing text {idx} on {device}: '{text}'")
+        questions = model.generate(image, use_evol_prompt=False, questions=None, evolvable_questions=[])
+        syn_qars = model.generate(image, use_evol_prompt=False, questions=questions, evolvable_questions=[])
+        syn_qars = postprocess_qars(parser, syn_qars)
+        try:
+            syn_qars = json.loads(syn_qars)
+        except json.JSONDecodeError:
+            #accelerator.print(f"Error: Could not parse syn_qars for model {i+1}. Skipping...")
+            #print(f'Error: Could not parse syn_qars moving to next mllm.')
+            continue
+
+        syn_qars = [
+            {**qar, 'rationales': [qar.get('rationale', 'Not Generated')], 'rationale': None} for qar in syn_qars
+        ]
+
+        syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
+        syn_qars = deduplicate_qars(syn_qars)
+        qars.append((process_id, image, syn_qars))
+
+"""
 # QAR generation
 def generate_qars(generator_mllms, slm, image, image_details):
     generator_mllms = [accelerator.prepare(mllm) for mllm in generator_mllms]
@@ -39,8 +62,10 @@ def generate_qars(generator_mllms, slm, image, image_details):
         for j, qar in enumerate(syn_qars):
             syn_qars_details[f'mllm_{i+1}'][f'qar_{j+1}'] = qar
     return syn_qars_details
+"""
 
 
+"""
 # TODO: improve system prompt
 # TODO: add json output cleaner
 # Initial judgement/evaluation
@@ -58,6 +83,7 @@ def judge_qars(judge_mllm, slm, image, syn_qars_details):
             syn_qars_details[mllm][qar] = judged_qars[i]
             i += 1
     return syn_qars_details
+"""
 
         
 # TODO: add json output cleaner
@@ -115,6 +141,7 @@ def deduplicate_qars(qars):
 
     return nonsimilar_qars
 
+"""
 # TODO: DO NOT call from inference.py
 # Evolution method generation
 def eval_qars(final_judge, slm, image, qars):
@@ -125,7 +152,9 @@ def eval_qars(final_judge, slm, image, qars):
         judgements.append([judgement_details["total_score"], judgement_details["evolution_method"]])
     scores, evol_methods = zip(*(judgements))
     return (scores, evol_methods)
+"""
 
+"""
 def get_jury_verdicts(juries, slm, synthesizer, image, qars):
     all_scores, all_evol_methods = [], []
     for i, jury in enumerate(juries):
@@ -150,7 +179,21 @@ def get_jury_verdicts(juries, slm, synthesizer, image, qars):
             qars[i]["evol_method"] = None
   
     return qars
+"""
 
+def eval_qars(process_id, qar_details, model, evol_methods, parser):
+    _, image, qar = qar_details
+    evol_details = model.evaluate([qar], image)
+    evol_details = evol_details[0]["judgement_details"]
+    evol_details = postprocess_judgement_details(parser, evol_details)
+    evol_methods.append(evol_details)
+    """
+    judgements.append([judgement_details["total_score"], judgement_details["evolution_method"]])
+    scores, evol_methods = zip(*(judgements))
+    """
+    #return (scores, evol_methods)
+
+"""
 def activate_jury_poll(juries, bailiff, slm, image, qars):
     verdicts = get_jury_verdicts(juries, slm, image, qars)
     for i, qar in enumerate(qars):
@@ -158,8 +201,33 @@ def activate_jury_poll(juries, bailiff, slm, image, qars):
         permissible_evol_method = synthesize_evol_methods(bailiff, evol_methods)
         qars[i]["evol_method"] = permissible_evol_method
     return qars
+"""
 
 
+#Evolve QARs
+def evolve_qars(process_id, evolvable_questions, model, qars, parser):
+    for idx, image_details in enumerate(evolvable_questions):
+        image = image_details["image"]
+        #new_fields = {"image": image_details["image"], "original_question_id": image_details["question_id"]}
+        evolvable_question_details = [image_details["question"], image_details["evol_method"]]
+        questions = model.generate(image, use_evol_prompt=True, questions=None, evolvable_questions=[evolvable_question_details])
+        syn_qars = model.generate(image, use_evol_prompt=False, questions=questions, evolvable_questions=[])
+        syn_qars = postprocess_qars(parser, syn_qars)
+        try:
+            syn_qars = json.loads(syn_qars)
+        except json.JSONDecodeError:
+            print(f'Error: Could not parse syn_qars moving to next mllm.')
+            continue
+
+        syn_qars = [
+            {**qar, 'rationales': [qar.get('rationale', 'Not Generated')], 'rationale': None} for qar in syn_qars
+        ]
+
+        syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
+        syn_qars = deduplicate_qars(syn_qars)
+        qars.append((process_id, image, syn_qars))
+
+"""
 #Evolve QARs
 def evolve_qars(generator_mllms, slm, image, image_details, evolvable_questions):
     #new_fields = {"image": image_details["image"], "original_question_id": image_details["question_id"]}
@@ -186,3 +254,4 @@ def evolve_qars(generator_mllms, slm, image, image_details, evolvable_questions)
         for j, qar in enumerate(syn_qars):
             syn_qars_details[f'mllm_{i+1}'][f'qar_{j+1}'] = qar
     return syn_qars_details
+"""

@@ -12,7 +12,7 @@ os.environ['HF_HOME']= cache_dir
 
 from utils import load_and_preprocess_dataset, setup_llama32, clean_out_json_output, convert_and_upload_to_hf
 
-vlm, processor = setup_llama32()
+#vlm, processor = setup_llama32()
 
 """
 vlm_id = "microsoft/Phi-3.5-vision-instruct" 

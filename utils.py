@@ -46,9 +46,9 @@ from models import MLLM, Judge, BackwardReasoner, FinalJudge
 # os.environ['HF_HOME']=f'{pwd}/.cache'
 # cache_dir=f'{pwd}/.cache'
 
-cache_dir= '/scratch/mi8uu/cache'
-os.environ['TRANSFORMERS_CACHE']=cache_dir
-os.environ['HF_HOME']= cache_dir
+#cache_dir= '/scratch/mi8uu/cache'
+#os.environ['TRANSFORMERS_CACHE']=cache_dir
+#os.environ['HF_HOME']= cache_dir
 
 
 CRITERIA = [
@@ -70,59 +70,67 @@ FEW_SHOT_QUESTIONS = [
 def load_and_preprocess_dataset(dataset_name):
     if dataset_name == "aokvqa":
         #dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
-        dataset = load_dataset("HuggingFaceM4/A-OKVQA")
+        dataset = load_dataset("HuggingFaceM4/A-OKVQA", split="train", cache_dir=cache_dir)
         # We are generating synthetic qar by using training data as seed dataset
         # Later we will finetune using test data (and validation data as needed)
     else:
-        dataset = load_dataset(dataset_name, cache_dir=cache_dir)
-    return dataset["train"]
+        dataset = load_dataset(dataset_name, split="train", cache_dir=cache_dir)
+    #return dataset["train"]
+    return dataset
 
-def setup_llama32():
-    model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+def setup_llama32(model_id, device):
+    # model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
     model = MllamaForConditionalGeneration.from_pretrained(
         model_id,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        #device_map=device,
+        device_map={"": device},
         cache_dir=cache_dir
     )
     processor = AutoProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        #device_map=device,
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-def setup_molmo():
-    model_id = "allenai/Molmo-7B-D-0924"
+def setup_molmo(model_id, device):
+    #model_id = "allenai/Molmo-7B-D-0924"
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        device_map={"": device},
         cache_dir=cache_dir
     )
     processor = AutoProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-def setup_llava():
+def setup_llava(model_id, device):
     # TODO: Later, upgrade to 1.6
-    model_id = "llava-hf/llava-1.5-7b-hf"
+    #model_id = "llava-hf/llava-1.5-7b-hf"
 
     model = LlavaForConditionalGeneration.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
@@ -130,17 +138,19 @@ def setup_llava():
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-def setup_llava_critic():
+def setup_llava_critic(model_id, device):
     warnings.filterwarnings("ignore")
     model_id = "lmms-lab/llava-critic-7b"
     model_name = "llava_qwen"
-    device_map = "auto"
+    device_map="cuda"
+    #device_map = device
     tokenizer, model, image_processor, max_length = load_pretrained_model(
         model_id, 
         None, 
@@ -148,15 +158,17 @@ def setup_llava_critic():
         device_map=device_map,
         cache_dir=cache_dir
     )
+    model.to(device)
 
     final_judge = FinalJudge("llava_critic", model, "qwen_1_5", image_processor, tokenizer, max_length) 
     return final_judge
 
-def setup_prometheus_vision():
-    model_id = "kaist-ai/prometheus-vision-13b-v1.0"
+def setup_prometheus_vision(model_id, device):
+    #model_id = "kaist-ai/prometheus-vision-13b-v1.0"
     model_name = "llava-v1.5"
     #device_map = "auto"
     device_map = "cuda"
+    #device_map = device
     tokenizer, model, image_processor, context_len = load_pretrained_model(
         model_id, 
         None, 
@@ -164,18 +176,22 @@ def setup_prometheus_vision():
         device_map=device_map,
         cache_dir=cache_dir
     )
-    model = model.to("cuda")
+    #model = model.to("cuda")
+    #model = model.to(device_map)
+    model = model.to(device)
 
     final_judge = FinalJudge("prometheus_vision", model, "llava_v1", image_processor, tokenizer, max_length=context_len)
     return final_judge
 
-def setup_qwen2_vl():
-    model_id = "Qwen/Qwen2-VL-7B-Instruct"
+def setup_qwen2_vl(model_id, device):
+    #model_id = "Qwen/Qwen2-VL-7B-Instruct"
     
     model = Qwen2VLForConditionalGeneration.from_pretrained(
         model_id,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        #device_map=device,
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
@@ -183,7 +199,9 @@ def setup_qwen2_vl():
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        #device_map=device,
+        device_map={"": device},
         cache_dir=cache_dir
     )
     
@@ -196,25 +214,36 @@ JURY_POLL = {
     "qwen2_vl": setup_qwen2_vl
 }
 
-def setup_jury_poll(jury_model_names):
+def setup_jury_poll(jury_model_names, model_card):
     juries = []
-    for jury_model_name in jury_model_names:
-        juries.append(JURY_POLL[jury_model_name]())
+    model_details = [model_config for model_config in model_card if model_config["name"] in jury_model_names]
+    for model_entry in model_details:
+        name = model_entry.get("name") 
+        model_id = model_entry.get("model_id")
+        device = model_entry.get("device")
+        juries.append(JURY_POLL[name](model_id, device))
+        #juries.append(JURY_POLL[jury_model_name](model_id, device))
     return juries
 
-def setup_synthesizer_llm(model_name="qwen_25"):
-    if model_name == "qwen_25":
-        model_id= "Qwen/Qwen2.5-7B-Instruct"
+def setup_synthesizer_llm(model_name, model_card):
+    model_details = [model_config for model_config in model_card if model_config["name"] == model_name]
+    name = model_details[0].get("name") 
+    model_id = model_details[0].get("model_id")
+    device = model_details[0].get("device")
+    if name == "qwen_25":
+        #model_id= "Qwen/Qwen2.5-7B-Instruct"
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
             torch_dtype="auto",
-            device_map="auto",
-            #cache_dir=cache_dir
+            #device_map="auto",
+            #device_map=device,
+            device_map={"": device},
+            cache_dir=cache_dir
         )
         
         tokenizer = AutoTokenizer.from_pretrained(
             model_id, 
-            #cache_dir=cache_dir
+            cache_dir=cache_dir
         )
 
     return (model, tokenizer)
@@ -317,7 +346,7 @@ def setup_phi3_vision():
     model = AutoModelForCausalLM.from_pretrained(
         model_id, 
         #device_map="cuda",
-        device_map="auto", 
+        #device_map="auto", 
         trust_remote_code=True, 
         torch_dtype="auto", 
         _attn_implementation='flash_attention_2',
@@ -333,13 +362,15 @@ def setup_phi3_vision():
     return (model, processor)
 
 
-def setup_llava_next():
-    model_id = "llava-hf/llava-v1.6-mistral-7b-hf"
+def setup_llava_next(model_id, device):
+    #model_id = "llava-hf/llava-v1.6-mistral-7b-hf"
     
     model = LlavaNextForConditionalGeneration.from_pretrained(
         model_id, 
         #device_map="cuda",
-        device_map="auto",
+        #device_map="auto",
+        #device_map=device,
+        device_map={"": device},
         trust_remote_code=True,
         torch_dtype="auto",
         cache_dir=cache_dir
@@ -349,35 +380,36 @@ def setup_llava_next():
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-
-def setup_generator_models(generator_models):
+def setup_generator_models(generator_model_names, model_card):
     generator_mllms = []
-    for model_name in generator_models:
-        if model_name == "llama_32":
-            model, processor = setup_llama32()
+    model_details = [model_config for model_config in model_card if model_config["name"] in generator_model_names]
+    for model_entry in model_details:
+        name = model_entry["name"] 
+        model_id = model_entry["model_id"]
+        device = model_entry["device"]
+        if name == "llama_32":
+            model, processor = setup_llama32(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))
-        elif model_name == "llava_next":
-            model, processor = setup_llava_next()
+        elif name == "llava_next":
+            model, processor = setup_llava_next(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="llava_next", inference_type="generate"))
-        elif model_name == "molmo":
-            # NOT WORKING: Bug fix is needed
-            model, processor = setup_molmo()
+        elif name == "molmo":
+            model, processor = setup_molmo(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type="generate"))
-        '''
-        elif model_name == "llava":
-            model, processor = setup_llava()
+        elif name == "llava":
+            model, processor = setup_llava(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="llava", inference_type="generate"))    
-        
-        '''
     return generator_mllms
 
     
+"""
 def setup_judge_models(judge_models):
     judge_mllms = []
     for model_name in judge_models:
@@ -392,7 +424,9 @@ def setup_judge_models(judge_models):
             model, processor = setup_phi3_vision()
             judge_mllms.append(Judge(model, processor, model_family="phi_3_vision", inference_type='judge'))
     return judge_mllms
+"""
 
+"""
 def setup_backward_reasoning_models(br_models):
     br_mllms = []
     for model_name in br_models:
@@ -404,18 +438,21 @@ def setup_backward_reasoning_models(br_models):
             model, processor = setup_phi3_vision()
             br_mllms.append(BackwardReasoner(model, processor, model_family="phi_3_vision", inference_type='backward_reasoning'))
     return br_mllms
+"""
 
+"""
 def setup_models(generator_models, judge_model, br_model):
     # Remove after testing
     generator_mllms = []
     judge_mllm = None
     br_mllm = None
     
-    generator_mllms = setup_generator_models(generator_models)
+    #generator_mllms = setup_generator_models(generator_models)
     #judge_mllm = setup_judge_models([judge_model])[0]
     #br_mllm = setup_backward_reasoning_models([br_model])[0]
     
     return (generator_mllms, judge_mllm, br_mllm)
+"""
 
 
 def setup_final_judge(model="llava_critic"):
@@ -472,9 +509,14 @@ def estimate_model_ram_usage():
     pass
 
 
-def setup_slm():
+def setup_slm(model_name, model_card):
+    model = [model_details for model_details in model_card if model_details.get("name") == model_name]
+    model = model[0]
+    model_id = model["model_id"]
+    device = model["device"]
+    
     # model_id = "meta-llama/Llama-3.2-1B-Instruct"
-    model_id = "meta-llama/Llama-3.2-3B-Instruct"
+    #model_id = "meta-llama/Llama-3.2-3B-Instruct"
     
     slm = pipeline(
         "text-generation",
@@ -482,7 +524,8 @@ def setup_slm():
         max_new_tokens=1000,
         temperature=0.7,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        device_map=device
     )
 
     return slm
@@ -852,6 +895,17 @@ def convert_and_upload_to_hf(qars, repo_name, create_dataset=True):
     dataset.push_to_hub(repo_id)
     print(f"Dataset is loaded to repo: {repo_id}")
     return
+
+def upload_batch_to_hub(batch_num, batch_output, repo_name, private=True):
+
+    if len(batch_output["question"]) == 0:
+        print("Empty batch skipped.")
+        return
+
+    batch_dataset = Dataset.from_dict(batch_output)
+
+    batch_dataset.push_to_hub(repo_name, private=private)
+    print(f"Batch {batch_num+1} uploaded to {repo_name} successfully.")
 
 """
     for i, qar_text in enumerate(qar_texts):
