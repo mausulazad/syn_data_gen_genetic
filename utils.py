@@ -1,6 +1,7 @@
 import requests
 import pprint
 import copy
+import random
 import json
 import torch
 from PIL import Image
@@ -33,8 +34,10 @@ from llava.model.builder import load_pretrained_model
 from llava.mm_utils import get_model_name_from_path, process_images, tokenizer_image_token
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IGNORE_INDEX
 from llava.conversation import conv_templates, SeparatorStyle
+# from llava.utils import disable_torch_init
 
 from transformers import LlavaNextProcessor, LlavaNextForConditionalGeneration
+from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 
 from datasets import load_dataset, Dataset
 from models import MLLM, Judge, BackwardReasoner, FinalJudge
@@ -64,62 +67,70 @@ FEW_SHOT_QUESTIONS = [
     "How could the objects in the image interact with one another?"
 ]
 
-
 def load_and_preprocess_dataset(dataset_name):
     if dataset_name == "aokvqa":
-        dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
+        #dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
+        dataset = load_dataset("HuggingFaceM4/A-OKVQA", split="train", cache_dir=cache_dir)
         # We are generating synthetic qar by using training data as seed dataset
         # Later we will finetune using test data (and validation data as needed)
     else:
-        dataset = load_dataset(dataset_name, cache_dir=cache_dir)
-    return dataset["train"]
+        dataset = load_dataset(dataset_name, split="train", cache_dir=cache_dir)
+    #return dataset["train"]
+    return dataset
 
-def setup_llama32():
-    model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+def setup_llama32(model_id, device):
+    # model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
     model = MllamaForConditionalGeneration.from_pretrained(
         model_id,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        #device_map=device,
+        device_map={"": device},
         cache_dir=cache_dir
     )
     processor = AutoProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        #device_map=device,
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-def setup_molmo():
-    model_id = "allenai/Molmo-7B-D-0924"
+def setup_molmo(model_id, device):
+    #model_id = "allenai/Molmo-7B-D-0924"
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        device_map={"": device},
         cache_dir=cache_dir
     )
     processor = AutoProcessor.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-def setup_llava():
+def setup_llava(model_id, device):
     # TODO: Later, upgrade to 1.6
-    model_id = "llava-hf/llava-1.5-7b-hf"
+    #model_id = "llava-hf/llava-1.5-7b-hf"
 
     model = LlavaForConditionalGeneration.from_pretrained(
         model_id,
         trust_remote_code=True,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
@@ -127,60 +138,207 @@ def setup_llava():
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-# TODO: Fix bugs
-def setup_llava_critic():
+def setup_llava_critic(model_id, device):
     warnings.filterwarnings("ignore")
     model_id = "lmms-lab/llava-critic-7b"
     model_name = "llava_qwen"
-    device = "cuda"
-    device_map = "auto"
+    device_map="cuda"
+    #device_map = device
     tokenizer, model, image_processor, max_length = load_pretrained_model(
         model_id, 
         None, 
         model_name, 
         device_map=device_map,
         cache_dir=cache_dir
-    ) 
-
-    #url = "https://github.com/haotian-liu/LLaVA/blob/1a91fc274d7c35a9b50b3cb29c4247ae5837ce39/images/llava_v1_5_radar.jpg?raw=true"
-    #mage = Image.open(requests.get(url, stream=True).raw)
-    #image_tensor = process_images([image], image_processor, model.config)
-    #image_tensor = [_image.to(dtype=torch.float16, device=device) for _image in image_tensor]
-
-    conv_template = "qwen_1_5"
-    question = DEFAULT_IMAGE_TOKEN + "\nWhat is shown in this image?"
-    conv = copy.deepcopy(conv_templates[conv_template])
-    conv.append_message(conv.roles[0], question)
-    conv.append_message(conv.roles[1], None)
-    prompt_question = conv.get_prompt()
-
-    input_ids = tokenizer_image_token(prompt_question, tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt").unsqueeze(0).to(device)
-    image_sizes = [image.size]
-
-    cont = model.generate(
-        input_ids,
-        images=image_tensor,
-        image_sizes=image_sizes,
-        do_sample=False,
-        max_new_tokens=300,
     )
-    
-    text_outputs = tokenizer.batch_decode(cont, skip_special_tokens=True)
-    print(text_outputs)
-    
-    tokenizer, model, image_processor, max_length = load_pretrained_model(
+    model.to(device)
+
+    final_judge = FinalJudge("llava_critic", model, "qwen_1_5", image_processor, tokenizer, max_length) 
+    return final_judge
+
+def setup_prometheus_vision(model_id, device):
+    #model_id = "kaist-ai/prometheus-vision-13b-v1.0"
+    model_name = "llava-v1.5"
+    #device_map = "auto"
+    device_map = "cuda"
+    #device_map = device
+    tokenizer, model, image_processor, context_len = load_pretrained_model(
         model_id, 
         None, 
-        model_name, 
-        device_map="auto",
+        model_name,
+        device_map=device_map,
         cache_dir=cache_dir
     )
+    #model = model.to("cuda")
+    #model = model.to(device_map)
+    model = model.to(device)
+
+    final_judge = FinalJudge("prometheus_vision", model, "llava_v1", image_processor, tokenizer, max_length=context_len)
+    return final_judge
+
+def setup_qwen2_vl(model_id, device):
+    #model_id = "Qwen/Qwen2-VL-7B-Instruct"
+    
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
+        model_id,
+        torch_dtype="auto",
+        #device_map="auto",
+        #device_map=device,
+        device_map={"": device},
+        cache_dir=cache_dir
+    )
+
+    processor = AutoProcessor.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        torch_dtype='auto',
+        #device_map='auto',
+        #device_map=device,
+        device_map={"": device},
+        cache_dir=cache_dir
+    )
+    
+    final_judge = FinalJudge("qwen2_vl", model, None, processor)
+    return final_judge
+
+JURY_POLL = {
+    "llava_critic": setup_llava_critic,
+    "prometheus_vision": setup_prometheus_vision,
+    "qwen2_vl": setup_qwen2_vl
+}
+
+def setup_jury_poll(jury_model_names, model_card):
+    juries = []
+    model_details = [model_config for model_config in model_card if model_config["name"] in jury_model_names]
+    for model_entry in model_details:
+        name = model_entry.get("name") 
+        model_id = model_entry.get("model_id")
+        device = model_entry.get("device")
+        juries.append(JURY_POLL[name](model_id, device))
+        #juries.append(JURY_POLL[jury_model_name](model_id, device))
+    return juries
+
+def setup_synthesizer_llm(model_name, model_card):
+    model_details = [model_config for model_config in model_card if model_config["name"] == model_name]
+    name = model_details[0].get("name") 
+    model_id = model_details[0].get("model_id")
+    device = model_details[0].get("device")
+    if name == "qwen_25":
+        #model_id= "Qwen/Qwen2.5-7B-Instruct"
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype="auto",
+            #device_map="auto",
+            #device_map=device,
+            device_map={"": device},
+            cache_dir=cache_dir
+        )
+        
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_id, 
+            cache_dir=cache_dir
+        )
+
+    return (model, tokenizer)
+
+def synthesize_evol_methods(llm, question, evol_methods):
+    system_prompt = """You are an helpful assistant with expertise in synthesizing text. You will be provided with **one to three evolution methods** generated by different Vision Language Models (VLMs) to evolve a question (question will be given too). Your task is to **identify the preferred method** among the provided options based on its alignment with the evaluation criteria and quality of suggestions. Then, synthesize a new evolution method by combining the best aspects of all provided methods, giving more weight to the preferred method. Ensure that the focus is  only on generating the synthesized evolution method and NOT on including or attempting to generate the evolved question itself.
+        ### Evolution Criteria:
+        1. Commonsense knowledge about human social behavior.
+        2. Knowledge of the physical world.
+        3. Visual understanding.
+        4. Reasoning capabilities.
+        5. Complexity requiring in-depth reasoning.        
+
+        ### Step 1: Identify the Preferred Method
+        Analyze the provided evolution methods and determine which one best satisfies the following:
+        1. **Alignment with Evaluation Criteria**: Does the method directly address and improve the question's performance across all (or more than other evolution methods) evaluation criteria?
+        2. **Clarity and Actionability**: Is the method easy to understand and implement without introducing ambiguity?
+        3. **Balance**: Does the method enhance underperforming aspects of the question without compromising its strengths?
+
+        ### Step 2: Synthesize the Evolution Method
+        1. **For a Single Method**:
+        - Use the single method as the final synthesized evolution method with no further modification unless explicitly required.
+
+        2. **For Multiple Methods**:
+        - Use the preferred method as the core framework for synthesis.
+        - Extract and incorporate complementary suggestions from other methods only if they:
+          - Address gaps or weaknesses in the preferred method without contradicting its core structure or logic.
+          - Enhance the quality of the evolved question without introducing unnecessary complexity.
+          - Align with the evaluation criteria.
+        - During synthesis, explicitly identify and resolve any contradictions between the preferred method and other suggestions to ensure coherence and consistency in the final output.
+
+        3. **Avoid Compromise**:
+        - Ensure the synthesized method does not lower the quality of any evaluation criteria addressed in the preferred method.
+
+        4. **Ensure Cohesion**:
+        - Combine the suggestions seamlessly into a single coherent and logically flowing evolution method.
+
+        ***IMPORTANT: The synthesized evolution method must ensure that the evolved question is designed to be concise and answerable using a maximum of 2-3 words, maintaining its alignment with the evaluation criteria.
+        
+        ### Output Format:
+        Provide the results in the following structure:
+
+        - **Preferred Method Identification**:  
+        Indicate which method was chosen as the preferred one and explain why it was selected.
+
+        - **Synthesis Process**:  
+        Briefly explain how the preferred method was prioritized and how the other methods (if any) were used to enhance it.
+
+        - **Synthesized Evolution Method**:
+        Present the final synthesized evolution method as a clear, brief, concise, and actionable paragraph. Ensure the evolution method is focused on improving the question and does not include the evolved question itself.
+        
+        Make sure that '### Synthesized Evolution Method:' is always placed prior to stating the method."""
+    
+    model, tokenizer = llm
+    
+    # Shuffle evol method order to mitigate any bias
+    random.shuffle(evol_methods)
+    evol_methods = "\n".join(f"Evolution Method {i + 1}: {evol_method}" for i, evol_method in enumerate(evol_methods))
+    query = f'Here is the question: {question}.\n And here are the evolution methods:\n{evol_methods}\n'
+    
+    messages = [
+        { "role": "system", "content": system_prompt },
+        { "role": "user", "content": query }
+    ]
+
+    input_text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True
+    )
+    
+    model_inputs = tokenizer([input_text], return_tensors="pt").to(model.device)
+
+    tries = 1
+    final_evol_method = None
+    while tries <= 3:
+        generated_ids = model.generate(
+            **model_inputs,
+            temperature=0.3,
+            max_new_tokens=350
+        )
+        
+        generated_ids = [
+            output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+        ]
+
+        synthesized_evol_method = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        splits = synthesized_evol_method.split("### Synthesized Evolution Method:")
+        if len(splits) == 2:
+            final_evol_method = splits[1].strip()
+            break
+        else:
+            tries += 1
+    return final_evol_method
+
 
 def setup_phi3_vision():
     model_id = "microsoft/Phi-3.5-vision-instruct" 
@@ -188,7 +346,7 @@ def setup_phi3_vision():
     model = AutoModelForCausalLM.from_pretrained(
         model_id, 
         #device_map="cuda",
-        device_map="auto", 
+        #device_map="auto", 
         trust_remote_code=True, 
         torch_dtype="auto", 
         _attn_implementation='flash_attention_2',
@@ -204,13 +362,15 @@ def setup_phi3_vision():
     return (model, processor)
 
 
-def setup_llava_next():
-    model_id = "llava-hf/llava-v1.6-mistral-7b-hf"
+def setup_llava_next(model_id, device):
+    #model_id = "llava-hf/llava-v1.6-mistral-7b-hf"
     
     model = LlavaNextForConditionalGeneration.from_pretrained(
         model_id, 
         #device_map="cuda",
-        device_map="auto",
+        #device_map="auto",
+        #device_map=device,
+        device_map={"": device},
         trust_remote_code=True,
         torch_dtype="auto",
         cache_dir=cache_dir
@@ -220,35 +380,36 @@ def setup_llava_next():
         model_id,
         trust_remote_code=True,
         torch_dtype='auto',
-        device_map='auto',
+        #device_map='auto',
+        device_map={"": device},
         cache_dir=cache_dir
     )
 
     return (model, processor)
 
-
-def setup_generator_models(generator_models):
+def setup_generator_models(generator_model_names, model_card):
     generator_mllms = []
-    for model_name in generator_models:
-        if model_name == "llama_32":
-            model, processor = setup_llama32()
+    model_details = [model_config for model_config in model_card if model_config["name"] in generator_model_names]
+    for model_entry in model_details:
+        name = model_entry["name"] 
+        model_id = model_entry["model_id"]
+        device = model_entry["device"]
+        if name == "llama_32":
+            model, processor = setup_llama32(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))
-        elif model_name == "llava_next":
-            model, processor = setup_llava_next()
+        elif name == "llava_next":
+            model, processor = setup_llava_next(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="llava_next", inference_type="generate"))
-        elif model_name == "molmo":
-            # NOT WORKING: Bug fix is needed
-            model, processor = setup_molmo()
+        elif name == "molmo":
+            model, processor = setup_molmo(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="molmo", inference_type="generate"))
-        '''
-        elif model_name == "llava":
-            model, processor = setup_llava()
+        elif name == "llava":
+            model, processor = setup_llava(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="llava", inference_type="generate"))    
-        
-        '''
     return generator_mllms
 
     
+"""
 def setup_judge_models(judge_models):
     judge_mllms = []
     for model_name in judge_models:
@@ -263,7 +424,9 @@ def setup_judge_models(judge_models):
             model, processor = setup_phi3_vision()
             judge_mllms.append(Judge(model, processor, model_family="phi_3_vision", inference_type='judge'))
     return judge_mllms
+"""
 
+"""
 def setup_backward_reasoning_models(br_models):
     br_mllms = []
     for model_name in br_models:
@@ -275,18 +438,21 @@ def setup_backward_reasoning_models(br_models):
             model, processor = setup_phi3_vision()
             br_mllms.append(BackwardReasoner(model, processor, model_family="phi_3_vision", inference_type='backward_reasoning'))
     return br_mllms
+"""
 
+"""
 def setup_models(generator_models, judge_model, br_model):
     # Remove after testing
     generator_mllms = []
     judge_mllm = None
     br_mllm = None
     
-    generator_mllms = setup_generator_models(generator_models)
+    #generator_mllms = setup_generator_models(generator_models)
     #judge_mllm = setup_judge_models([judge_model])[0]
     #br_mllm = setup_backward_reasoning_models([br_model])[0]
     
     return (generator_mllms, judge_mllm, br_mllm)
+"""
 
 
 def setup_final_judge(model="llava_critic"):
@@ -343,9 +509,14 @@ def estimate_model_ram_usage():
     pass
 
 
-def setup_slm():
+def setup_slm(model_name, model_card):
+    model = [model_details for model_details in model_card if model_details.get("name") == model_name]
+    model = model[0]
+    model_id = model["model_id"]
+    device = model["device"]
+    
     # model_id = "meta-llama/Llama-3.2-1B-Instruct"
-    model_id = "meta-llama/Llama-3.2-3B-Instruct"
+    #model_id = "meta-llama/Llama-3.2-3B-Instruct"
     
     slm = pipeline(
         "text-generation",
@@ -353,7 +524,8 @@ def setup_slm():
         max_new_tokens=1000,
         temperature=0.7,
         torch_dtype="auto",
-        device_map="auto",
+        #device_map="auto",
+        device_map=device
     )
 
     return slm
@@ -591,17 +763,24 @@ def postprocess_judgement_details(slm, judgement_text):
     outputs = slm(messages)
     output = outputs[0]["generated_text"][-1]['content']
     cleaned_output = clean_out_json_output(output)
-    
     valid_aspects = ["commonsense", "physical_world", "visual_understanding", "reasoning", "complexity"]
     try:
         parsed_output = json.loads(cleaned_output)
-        total_score = sum(
-            parsed_output["scores"][aspect]["value"] for aspect in valid_aspects if aspect in parsed_output["scores"]
-        )
-        parsed_output["total_score"] = total_score
+        if "scores" in parsed_output:
+            total_score = sum(
+                parsed_output["scores"][aspect]["value"] for aspect in valid_aspects if aspect in parsed_output["scores"]
+            )
+            parsed_output["total_score"] = total_score
+        else:
+            # Do not consider the score 
+            parsed_output["total_score"] = -1
+        parsed_output["evolution_method"] = "Not given" if "evolution_method" not in parsed_output else parsed_output["evolution_method"]
     except json.JSONDecodeError:
         print(f'Error: Could not parse syn_qar')
-        parsed_output = None
+        parsed_output = {
+            "total_score": -1,
+            "evolution_method": "Not given"
+        }
 
     return parsed_output
 
@@ -679,20 +858,54 @@ def load_json_file(file_name):
         data = json.load(json_file)
     return data
 
-def convert_and_upload_to_hf(qars, repo_name):
+def convert_and_upload_to_hf(qars, repo_name, create_dataset=True):
+    if create_dataset:
+        required_keys = [ "original_question_id", "question", "answer", "rationales", "image" ]
+    else:
+        required_keys = [ "original_question_id", "question", "answer", "rationales", "image", "synthetic_question_id", "choices", "correct_choice_idx" ]
+    
+    if not isinstance(qars, list) or not all(isinstance(qar, dict) for qar in qars):
+        raise ValueError("Input `qars` must be a list of dictionaries.")
+    if not qars:
+        raise ValueError("Input `qars` cannot be an empty list.")
+
+    validated_qars = []
+    for qar in qars:
+        validated_qars.append({key: qar.get(key, [] if key in {"rationales", "choices"} else "") for key in required_keys})
+
+    
+    formatted_qars = {key: [qar[key] for qar in validated_qars] for key in required_keys}
+    dataset = Dataset.from_dict(formatted_qars)
+    
+    # Add synthetic question ID if create_dataset is True
+    if create_dataset:
+        """
+        dataset = dataset.map(
+            lambda qar: {**qar, "synthetic_question_id": secrets.token_urlsafe(19)[:25]}
+        )
+        """
+        dataset = dataset.map(
+            lambda qar: {"synthetic_question_id": secrets.token_urlsafe(19)[:25]}
+        )
+    
     api = HfApi()
     user_name = api.whoami()["name"]
-    formatted_qars = {key: [qar[key] for qar in qars] for key in qars[0]}
-    dataset = Dataset.from_dict(formatted_qars)
-    dataset = dataset.map(
-        lambda qar: {"synthetic_question_id": secrets.token_urlsafe(19)[:25]}
-    )
-    
     repo_id=f"{user_name}/{repo_name}"
     api.create_repo(repo_id=repo_id, repo_type="dataset")
     dataset.push_to_hub(repo_id)
     print(f"Dataset is loaded to repo: {repo_id}")
     return
+
+def upload_batch_to_hub(batch_num, batch_output, repo_name, private=True):
+
+    if len(batch_output["question"]) == 0:
+        print("Empty batch skipped.")
+        return
+
+    batch_dataset = Dataset.from_dict(batch_output)
+
+    batch_dataset.push_to_hub(repo_name, private=private)
+    print(f"Batch {batch_num+1} uploaded to {repo_name} successfully.")
 
 """
     for i, qar_text in enumerate(qar_texts):
