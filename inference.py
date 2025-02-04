@@ -39,7 +39,9 @@ from utils import (
 
 #from option_gen import generate_options
 
-
+cache_dir= '/scratch/mi8uu/cache'
+os.environ['TRANSFORMERS_CACHE']=cache_dir
+os.environ['HF_HOME']= cache_dir
 
 model_card = [
     # slm
