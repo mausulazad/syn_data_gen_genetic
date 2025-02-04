@@ -18,6 +18,7 @@ import numpy as np
 from multiprocess import set_start_method
 from torch.utils.data import DataLoader
 
+from steps import *
 from utils import (
     load_and_preprocess_dataset,
     setup_slm,
@@ -38,7 +39,7 @@ from utils import (
 
 #from option_gen import generate_options
 
-from steps import generate_qars, evolve_qars, eval_qars, verify_inference, deduplicate_qars
+
 
 model_card = [
     # slm
