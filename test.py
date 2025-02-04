@@ -3,7 +3,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, LlavaNextProcessor
 
 # Model card with names and model IDs
 model_card = [
-    # {"name": "slm", "model_id": "meta-llama/Llama-3.2-3B-Instruct"},
+    {"name": "slm", "model_id": "meta-llama/Llama-3.2-3B-Instruct"},
     # {"name": "llama_32", "model_id": "meta-llama/Llama-3.2-11B-Vision-Instruct"},
     {"name": "llava_next", "model_id": "llava-hf/llava-v1.6-mistral-7b-hf"},
     # {"name": "molmo", "model_id": "allenai/Molmo-7B-D-0924"},
