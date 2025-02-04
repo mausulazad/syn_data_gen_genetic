@@ -1,6 +1,9 @@
 import argparse
 from multiprocess import set_start_method
-
+import sys
+import os
+sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("."))
 from inference import build_synthetic_dataset, build_dataset
 
 def main():
