@@ -15,7 +15,7 @@ model_card = [
 
 # Get available GPU count
 num_gpus = torch.cuda.device_count()
-assert num_gpus >= 4, f"Expected at least 4 GPUs, but found {num_gpus}"
+# assert num_gpus >= 4, f"Expected at least 4 GPUs, but found {num_gpus}"
 
 # Assign models to GPUs in a round-robin manner
 for i, model in enumerate(model_card):
