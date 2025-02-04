@@ -39,8 +39,8 @@ for model_info in model_card:
     
     else:
         model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
-        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        processor = AutoTokenizer.from_pretrained(model_id)
     
-    models[name] = {"model": model, "tokenizer": tokenizer}
+    models[name] = {"model": model, "processor": processor}
 
 print("All models loaded successfully.")
