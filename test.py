@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlavaNextProcessor, LlavaNextForConditionalGeneration
 
 # Model card with names and model IDs
 model_card = [
@@ -26,9 +26,20 @@ models = {}
 for model_info in model_card:
     name, model_id, device = model_info["name"], model_info["model_id"], model_info["device"]
     print(f"Loading {name} on {device}...")
+
+    if 'llava' in model_id.lower():
+        model = LlavaNextForConditionalGeneration.from_pretrained(
+        model_id
+        ).to(device)
+
+        processor = LlavaNextProcessor.from_pretrained(
+            model_id
+        )
+
     
-    model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
     
     models[name] = {"model": model, "tokenizer": tokenizer}
 
