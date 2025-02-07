@@ -11,7 +11,8 @@ accelerator = Accelerator()
 
 from utils import postprocess_qars, postprocess_judgement_details, synthesize_evol_methods
 
-def generate_qars(process_id, batch, model, qars, parser):
+def generate_qars(batch, model, parser):
+    qars = []
     for idx, image_details in enumerate(batch):
         image = image_details["image"]
         #print(f"[DEBUG] Process {process_id}: Model {model_name} processing text {idx} on {device}: '{text}'")
@@ -31,7 +32,8 @@ def generate_qars(process_id, batch, model, qars, parser):
 
         syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
         syn_qars = deduplicate_qars(syn_qars)
-        qars.append((process_id, image, syn_qars))
+        qars.append((image, syn_qars))
+    return qars
 
 """
 # QAR generation
@@ -181,8 +183,9 @@ def get_jury_verdicts(juries, slm, synthesizer, image, qars):
     return qars
 """
 
-def eval_qars(process_id, qar_details, model, evol_methods, parser):
-    _, image, qar = qar_details
+def eval_qars(qar_details, model, parser):
+    evol_methods = []
+    image, qar = qar_details
     evol_details = model.evaluate([qar], image)
     evol_details = evol_details[0]["judgement_details"]
     evol_details = postprocess_judgement_details(parser, evol_details)
@@ -192,6 +195,7 @@ def eval_qars(process_id, qar_details, model, evol_methods, parser):
     scores, evol_methods = zip(*(judgements))
     """
     #return (scores, evol_methods)
+    return evol_methods
 
 """
 def activate_jury_poll(juries, bailiff, slm, image, qars):
@@ -205,7 +209,8 @@ def activate_jury_poll(juries, bailiff, slm, image, qars):
 
 
 #Evolve QARs
-def evolve_qars(process_id, evolvable_questions, model, qars, parser):
+def evolve_qars(evolvable_questions, model, parser):
+    qars = []
     for idx, image_details in enumerate(evolvable_questions):
         image = image_details["image"]
         #new_fields = {"image": image_details["image"], "original_question_id": image_details["question_id"]}
@@ -225,7 +230,8 @@ def evolve_qars(process_id, evolvable_questions, model, qars, parser):
 
         syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
         syn_qars = deduplicate_qars(syn_qars)
-        qars.append((process_id, image, syn_qars))
+        qars.append((image, syn_qars))
+    return qars
 
 """
 #Evolve QARs

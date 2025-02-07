@@ -46,9 +46,9 @@ from models import MLLM, Judge, BackwardReasoner, FinalJudge
 # os.environ['HF_HOME']=f'{pwd}/.cache'
 # cache_dir=f'{pwd}/.cache'
 
-#cache_dir= '/scratch/mi8uu/cache'
-#os.environ['TRANSFORMERS_CACHE']=cache_dir
-#os.environ['HF_HOME']= cache_dir
+cache_dir= '/scratch/mi8uu/cache'
+os.environ['TRANSFORMERS_CACHE']=cache_dir
+os.environ['HF_HOME']= cache_dir
 
 
 CRITERIA = [
@@ -221,6 +221,7 @@ def setup_jury_poll(jury_model_names, model_card):
         name = model_entry.get("name") 
         model_id = model_entry.get("model_id")
         device = model_entry.get("device")
+        print(device)
         juries.append(JURY_POLL[name](model_id, device))
         #juries.append(JURY_POLL[jury_model_name](model_id, device))
     return juries
@@ -230,6 +231,7 @@ def setup_synthesizer_llm(model_name, model_card):
     name = model_details[0].get("name") 
     model_id = model_details[0].get("model_id")
     device = model_details[0].get("device")
+    print(device)
     if name == "qwen_25":
         #model_id= "Qwen/Qwen2.5-7B-Instruct"
         model = AutoModelForCausalLM.from_pretrained(
@@ -394,6 +396,7 @@ def setup_generator_models(generator_model_names, model_card):
         name = model_entry["name"] 
         model_id = model_entry["model_id"]
         device = model_entry["device"]
+        print(device)
         if name == "llama_32":
             model, processor = setup_llama32(model_id, device)
             generator_mllms.append(MLLM(model, processor, model_family="llama_32", inference_type="generate"))

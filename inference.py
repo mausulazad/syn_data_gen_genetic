@@ -11,8 +11,11 @@ import sys
 import warnings
 import os
 
+import numpy as np
+
 #from multiprocess import set_start_method
-import torch.multiprocessing as mp
+#import torch.multiprocessing as mp
+from multiprocess import set_start_method
 from torch.utils.data import DataLoader
 
 from utils import (
@@ -35,7 +38,7 @@ from utils import (
 
 #from option_gen import generate_options
 
-from steps import generate_qars, evolve_qars, judge_qars, eval_qars, verify_inference, deduplicate_qars, activate_jury_poll, get_jury_verdicts
+from steps import generate_qars, evolve_qars, eval_qars, verify_inference, deduplicate_qars
 
 model_card = [
     # slm
@@ -88,6 +91,7 @@ slm, generator_mllms, jury_mllms, synthesizer = None, [], [], None
 
 def allocate_gpu(model_card):
     devices = torch.cuda.device_count()
+    print(devices)
     if devices > 0:
         for i, _ in enumerate(model_card):
             model_card[i]["device"] = f"cuda:{(i) % devices}"
@@ -114,15 +118,23 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
     # Load aokvqa/scienceqa dataset
     seed_dataset = load_and_preprocess_dataset(dataset)
     
+    # USE SAMPLES FOR TESTING & DEBUGGING. LATER RUN THIS ON ENTIRE DATASET
+    num_samples = len(seed_dataset)
+    #print(num_samples)
+    sample_indices = np.random.choice(num_samples, size=4, replace=False)
+    seed_dataset = seed_dataset.select(sample_indices)
+    
     gen_model_count = sum(1 for model in model_card if model.get("name") in generator_model_names)
     jury_model_count = sum(1 for model in model_card if model.get("name") in jury_model_names)
     slm_model_exists = any(model.get("name") == "slm" for model in model_card)
     synthesizer_model_exists = any(model.get("name") == "qwen_25" for model in model_card)
     
-    if ((gen_model_count == len(generator_model_names)) and (jury_model_count == len(jury_model_names)) and slm_model_exists and synthesizer_model_exists):
+    if not ((gen_model_count == len(generator_model_names)) and (jury_model_count == len(jury_model_names)) and slm_model_exists and synthesizer_model_exists):
         print("1 or more given models' config details is not available.")
         return
 
+    model_details = config_models(model_card, generator_model_names, jury_model_names)
+    
     batch_size = 2
     for batch_num, batch_output in enumerate(
         seed_dataset.map(
@@ -130,14 +142,17 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
             batched=True,
             batch_size=batch_size,
             with_rank=True,
-            num_proc=torch.cuda.device_count(),
+            num_proc=1,
+            #num_proc=torch.cuda.device_count(),
             fn_kwargs={
                 "model_card": model_card,
+                "model_details": model_details,
                 "generator_model_names": generator_model_names,
                 "jury_model_names": jury_model_names
             }
         )
     ):
+        """
         upload_batch_to_hub(
             batch_num,
             batch_output=batch_output,
@@ -145,17 +160,20 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
             repo_name="username/repository-name",
             private=True
         )
+        """
+        print(batch_output)
 
 
-def build_synthetic_dataset(batch, rank, model_card, generator_model_names, jury_model_names):
+def build_synthetic_dataset(batch, rank, model_card, model_details, generator_model_names, jury_model_names):
+    """
     try:
         mp.set_start_method("spawn", force=True)  # Ensure correct start method
     except RuntimeError:
         pass  # Ignore if already set
+    """
     
-    model_details = config_models(model_card, generator_model_names, jury_model_names)
-    
-    manager = mp.Manager()
+    #model_details = config_models(model_card, generator_model_names, jury_model_names)
+    #manager = mp.Manager()
     
     parser = model_details["parser"]
     generator_mllms = model_details["generator_mllms"]
@@ -168,8 +186,11 @@ def build_synthetic_dataset(batch, rank, model_card, generator_model_names, jury
     current_try = 1
     while current_try <= max_tries:
         # shared across all processes
-        qars = manager.list()
+        #qars = manager.list()
+        qars = []
         
+        # DO NOT USE: multiprocessing based code
+        """
         processes = []
         for process_id, model in enumerate(generator_mllms):
             if len(evolvable_questions) == 0:
@@ -183,20 +204,33 @@ def build_synthetic_dataset(batch, rank, model_card, generator_model_names, jury
 
         for p in processes:
             p.join()
+        """
+
+        # USE THIS CODE SNIPPET
+        for idx, model in enumerate(generator_mllms):
+            if len(evolvable_questions) == 0:
+                qars.extend(generate_qars(batch, model, parser))
+            else:
+                qars.extend(evolve_qars(evolvable_questions, model, parser)
 
         all_qars = []
-        for process_id, image, syn_qars in qars:
+        for image, syn_qars in qars:
             #print(f"[RESULT] Process {process_id}: {model_name} -> '{input_text}' => '{output_text}'")
             for qar in syn_qars:
-                all_qars.append((process_id, image, qar))
+                all_qars.append((image, qar))
 
         # TODO push code (comment out, not remove)
 
         evolvable_questions = []
         for idx, qar_details in enumerate(all_qars):
-            _, image, qar = qar_details
-            evol_methods = manager.list()
+            image, qar = qar_details
+            #evol_methods = manager.list()
+            evol_methods = []
             jury_processes = []
+            
+            
+            # DO NOT USE: multiprocessing based code
+            """
             for process_id, model in enumerate(jury_mllms):
                 p = mp.Process(target=eval_qars, args=(process_id, qar_details, model, evol_methods, parser))
                 p.start()
@@ -204,6 +238,11 @@ def build_synthetic_dataset(batch, rank, model_card, generator_model_names, jury
 
             for p in jury_processes:
                 p.join()
+            """
+
+            for model in jury_mllms:
+                evol_methods.extend(eval_qars(qar_details, model, parser))
+                            
 
             evolution_methods = []
             scores = []
@@ -244,7 +283,7 @@ def build_synthetic_dataset(batch, rank, model_card, generator_model_names, jury
  
         current_try += 1
 
-    if len(quality_qars) == 0: 
+    if len(quality_qars) != 0: 
         qar_map = {key: [item[key] for item in quality_qars] 
                           for key in quality_qars[0]}
     else:
