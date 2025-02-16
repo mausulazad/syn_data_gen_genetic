@@ -13,18 +13,21 @@ from utils import postprocess_qars, postprocess_judgement_details, synthesize_ev
 
 def generate_qars(batch, model, parser):
     qars = []
-    for idx, image_details in enumerate(batch['image']):
 
-        image = image_details
+    # enumerate only the image to generate the question, answer rationale (qars)
+    for idx, image in enumerate(batch['image']):
+
         #print(f"[DEBUG] Process {process_id}: Model {model_name} processing text {idx} on {device}: '{text}'")
         questions = model.generate(image, use_evol_prompt=False, questions=None, evolvable_questions=[])
         syn_qars = model.generate(image, use_evol_prompt=False, questions=questions, evolvable_questions=[])
+
+        # parsing the generated qar
         syn_qars = postprocess_qars(parser, syn_qars)
         
-        print('-'*50)
-        print(f'Sample: {syn_qars}')
-        print(f'Type of qar: {type(syn_qars)}')
-        print('-'*50)
+        # print('-'*50)
+        # print(f'Sample: {syn_qars}')
+        # print(f'Type of qar: {type(syn_qars)}')
+        # print('-'*50)
 
         try:
             syn_qars = json.loads(syn_qars)
@@ -33,19 +36,20 @@ def generate_qars(batch, model, parser):
             #print(f'Error: Could not parse syn_qars moving to next mllm.')
             continue
 
-        print('***********************After try catch************************')
-        print(f'Sample: {syn_qars}')
-        print(f'Type of qar: {type(syn_qars)}')
-        print('-'*50)
-
-
+        # format into a AOKVQA structure
         syn_qars = [
             {**qar, 'rationales': [qar.get('rationale', 'Not Generated')], 'rationale': None} for qar in syn_qars
         ]
 
+        # covert the qars in list
         syn_qars = [{k: v for k, v in qar.items() if k != "rationale"} for qar in syn_qars]
+
+        # check if duplicate qar is generated and discard them
         syn_qars = deduplicate_qars(syn_qars)
+
+        # map the corresponding image and their qars
         qars.append((image, syn_qars))
+
     return qars
 
 """
@@ -199,6 +203,10 @@ def get_jury_verdicts(juries, slm, synthesizer, image, qars):
 def eval_qars(qar_details, model, parser):
     evol_methods = []
     image, qar = qar_details
+    print('--------------------')
+    print(f'type of image: {type(image)}')
+    print(f'qar: {qar}')
+    print('--------------------')
     evol_details = model.evaluate([qar], image)
     evol_details = evol_details[0]["judgement_details"]
     evol_details = postprocess_judgement_details(parser, evol_details)

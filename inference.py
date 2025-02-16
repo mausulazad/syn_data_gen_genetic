@@ -208,12 +208,21 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
         
         # USE THIS CODE SNIPPET
         for idx, model in enumerate(generator_mllms):
+            
+            # we'll generated the qar for the very first time
             if len(evolvable_questions) == 0:
                 qars.extend(generate_qars(batch, model, parser))
             else:
                 qars.extend(evolve_qars(evolvable_questions, model, parser))
 
+        print('-------------')
+        print(len(qars))
+        print('-------------')
+
         all_qars = []
+        
+        # we have multiple qars for one image.
+        # we'll map one-one mapping image-qar from one-to-many (image-qars)
         for image, syn_qars in qars:
             #print(f"[RESULT] Process {process_id}: {model_name} -> '{input_text}' => '{output_text}'")
             for qar in syn_qars:
@@ -221,6 +230,7 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
 
         # TODO push code (comment out, not remove)
 
+        # jury time to evelauate the first generated qars
         evolvable_questions = []
         for idx, qar_details in enumerate(all_qars):
             image, qar = qar_details
