@@ -215,10 +215,6 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
             else:
                 qars.extend(evolve_qars(evolvable_questions, model, parser))
 
-        print('-------------')
-        print(len(qars))
-        print('-------------')
-
         all_qars = []
         
         # we have multiple qars for one image.

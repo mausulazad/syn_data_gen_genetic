@@ -842,7 +842,7 @@ class FinalJudge:
 
     
     # base-64 encoded image
-    def evaluate(self, image, qars):
+    def evaluate(self, qars, image):
         # Use LLaVA-Critic
         if self.model_name == "llava_critic":
             image_tensor = process_images([image], self.processor, self.model.config)
@@ -904,6 +904,7 @@ class FinalJudge:
                     judgement_text = outputs[:-len(stop_str)]
                 judgement_text = judgement_text.strip()
                 qars[i]["judgement_details"] = judgement_text
+        
         elif self.model_name == "qwen2_vl":
             for i, qar in enumerate(qars):
                 query = f'Question (to be judged): {qar["question"]}'
@@ -955,6 +956,7 @@ class FinalJudge:
                 judgement_text = self.processor.batch_decode(output, skip_special_tokens=True, clean_up_tokenization_spaces=False)
                 qars[i]["judgement_details"] = judgement_text
             return qars
+        
         # Use LLaVA-Next
         elif self.model_name == "llava_next":
             for i, qar in enumerate(qars):
