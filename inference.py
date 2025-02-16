@@ -152,15 +152,13 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
             }
         )
     ):
-        """
         upload_batch_to_hub(
             batch_num,
             batch_output=batch_output,
             # TODO: replace with a original repo name
-            repo_name="username/repository-name",
+            repo_name="mausul/test_demo",
             private=True
         )
-        """
         print(batch_output)
 
 
