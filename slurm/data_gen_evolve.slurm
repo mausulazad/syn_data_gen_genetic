@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1 
 #SBATCH -t 10:00:00 
 #SBATCH -p gpu
-#SBATCH --gres=gpu:a100:3
+#SBATCH --gres=gpu:a100:4
 #SBATCH --mem=100G
 #SBATCH -N 1 
 #SBATCH --output=log/slurm/with_evol_data_gen/log-%A-%a.log 
