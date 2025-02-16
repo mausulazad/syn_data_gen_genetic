@@ -14,6 +14,9 @@ from utils import postprocess_qars, postprocess_judgement_details, synthesize_ev
 def generate_qars(batch, model, parser):
     qars = []
     for idx, image_details in enumerate(batch):
+        print('---')
+        print(image_details)
+        print('---')
         image = image_details["image"]
         #print(f"[DEBUG] Process {process_id}: Model {model_name} processing text {idx} on {device}: '{text}'")
         questions = model.generate(image, use_evol_prompt=False, questions=None, evolvable_questions=[])
