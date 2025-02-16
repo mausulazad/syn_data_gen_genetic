@@ -205,9 +205,7 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
         for p in processes:
             p.join()
         """
-        print('---')
-        print(batch)
-        print('---')
+        
         # USE THIS CODE SNIPPET
         for idx, model in enumerate(generator_mllms):
             if len(evolvable_questions) == 0:
