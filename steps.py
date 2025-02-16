@@ -20,12 +20,24 @@ def generate_qars(batch, model, parser):
         questions = model.generate(image, use_evol_prompt=False, questions=None, evolvable_questions=[])
         syn_qars = model.generate(image, use_evol_prompt=False, questions=questions, evolvable_questions=[])
         syn_qars = postprocess_qars(parser, syn_qars)
+        
+        print('-'*50)
+        print(f'Sample: {syn_qars}')
+        print(f'Type of qar: {type(syn_qars)}')
+        print('-'*50)
+
         try:
             syn_qars = json.loads(syn_qars)
         except json.JSONDecodeError:
             #accelerator.print(f"Error: Could not parse syn_qars for model {i+1}. Skipping...")
             #print(f'Error: Could not parse syn_qars moving to next mllm.')
             continue
+
+        print('***********************After try catch************************')
+        print(f'Sample: {syn_qars}')
+        print(f'Type of qar: {type(syn_qars)}')
+        print('-'*50)
+
 
         syn_qars = [
             {**qar, 'rationales': [qar.get('rationale', 'Not Generated')], 'rationale': None} for qar in syn_qars
