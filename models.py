@@ -906,6 +906,9 @@ class FinalJudge:
                 qars[i]["judgement_details"] = judgement_text
         
         elif self.model_name == "qwen2_vl":
+
+            # system prompt is fixed for all juries
+            # =====================================================================
             for i, qar in enumerate(qars):
                 query = f'Question (to be judged): {qar["question"]}'
 

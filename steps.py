@@ -203,10 +203,14 @@ def get_jury_verdicts(juries, slm, synthesizer, image, qars):
 def eval_qars(qar_details, model, parser):
     evol_methods = []
     image, qar = qar_details
+
+    # get the raw judgment from the target jury model
     evol_details = model.evaluate([qar], image)
     evol_details = evol_details[0]["judgement_details"]
+
+    # just format/structre the judgmet we got. 
     evol_details = postprocess_judgement_details(parser, evol_details)
-    evol_methods.append(evol_details)
+    evol_methods.append(evol_details) #calling this evol method
     """
     judgements.append([judgement_details["total_score"], judgement_details["evolution_method"]])
     scores, evol_methods = zip(*(judgements))

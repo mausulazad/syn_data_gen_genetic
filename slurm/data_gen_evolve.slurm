@@ -19,6 +19,7 @@ export HF_TOKEN=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
 module purge
 module load apptainer
 
+# python3 main.py --dataset aokvqa --generator_models llama_32 --jury_models llava_critic qwen2_vl
 
 apptainer exec --nv /scratch/mi8uu/mausul/sifs/llava_container_data_gen_v3.sif \
-python3 main.py --dataset aokvqa --generator_models llama_32 --jury_models llava_critic qwen2_vl
+python3 main.py --dataset aokvqa --generator_models llama_32 llava_next molmo --jury_models llava_critic qwen2_vl

@@ -246,24 +246,38 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
                 p.join()
             """
 
+            # enumerate jury models and pass qars to each model & get the evol method
+            # so if no. of jury is three (3) we'd have three (3) evol methods
             for model in jury_mllms:
                 evol_methods.extend(eval_qars(qar_details, model, parser))
                             
 
+            # we will asses if we get the proper evol method 
+            # if yes we'd store the score and method 
             evolution_methods = []
             scores = []
             for evol_method_details in evol_methods:
+                print('---------')
+                print(evol_method_details)
+                print('-----------------')
+                
+                # a condition to discard the error evolv method, exp: prometheus vision 
                 if evol_method_details["evolution_method"] != "Not given" and evol_method_details["total_score"] != -1:
                     evolution_methods.append(evol_method_details["evolution_method"])
                     scores.append(evol_method_details["total_score"])
         
+            # ===========================================================================================================================
+            # average the jury poll score and synthesize all evol methods 
             jury_score = 0
             if len(scores) > 0:
                 jury_score = sum(scores)/len(scores)
 
             # synthesize evol_methods
             synthesized_evol_method = synthesize_evol_methods(synthesizer, qar.get("question", "None generated"), evolution_methods)
-            
+            # ===========================================================================================================================
+
+
+            # checking if the target score is achieved they are judged as quality qar
             if jury_score > 90:
                 quality_qars.append({
                     "question": qar.get("question", "None generated"),
@@ -273,6 +287,9 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
                     "jury_score": jury_score,
                     "evol_method": synthesized_evol_method
                 })
+
+            
+            # non quality qars are going to be evolved
             else:
                 evolvable_questions.append({
                     "question": qar.get("question", "None generated"),
