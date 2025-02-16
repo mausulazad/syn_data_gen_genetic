@@ -211,7 +211,7 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
             if len(evolvable_questions) == 0:
                 qars.extend(generate_qars(batch, model, parser))
             else:
-                qars.extend(evolve_qars(evolvable_questions, model, parser)
+                qars.extend(evolve_qars(evolvable_questions, model, parser))
 
         all_qars = []
         for image, syn_qars in qars:
