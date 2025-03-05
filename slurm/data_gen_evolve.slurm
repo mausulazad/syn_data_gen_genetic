@@ -3,10 +3,10 @@
 #SBATCH -A collabrobogroup
 #SBATCH --array=0
 #SBATCH --ntasks=1 
-#SBATCH -t 10:00:00 
+#SBATCH -t 3-00:00:00 
 #SBATCH -p gpu
-#SBATCH --gres=gpu:a100:4
-#SBATCH --mem=100G
+#SBATCH --gres=gpu:a100:2
+#SBATCH --mem=120G
 #SBATCH -N 1 
 #SBATCH --output=log/slurm/with_evol_data_gen/log-%A-%a.log 
 #SBATCH -J with_evol
@@ -20,6 +20,7 @@ module purge
 module load apptainer
 
 # python3 main.py --dataset aokvqa --generator_models llama_32 --jury_models llava_critic qwen2_vl
+# python3 main.py --dataset aokvqa --generator_models llama_32 llava_next molmo --jury_models llava_critic qwen2_vl
 
 apptainer exec --nv /scratch/mi8uu/mausul/sifs/llava_container_data_gen_v3.sif \
-python3 main.py --dataset aokvqa --generator_models llama_32 llava_next molmo --jury_models llava_critic qwen2_vl
+python3 main.py --dataset aokvqa --generator_models llama_32 --jury_models llava_critic

@@ -769,7 +769,8 @@ def postprocess_judgement_details(slm, judgement_text):
     valid_aspects = ["commonsense", "physical_world", "visual_understanding", "reasoning", "complexity"]
     try:
         parsed_output = json.loads(cleaned_output)
-        if "scores" in parsed_output:
+        #if "scores" in parsed_output:
+        if "scores" in parsed_output and parsed_output["scores"] is not None:
             total_score = sum(
                 parsed_output["scores"][aspect]["value"] for aspect in valid_aspects if aspect in parsed_output["scores"]
             )

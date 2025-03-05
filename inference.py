@@ -119,10 +119,10 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
     seed_dataset = load_and_preprocess_dataset(dataset)
     
     # USE SAMPLES FOR TESTING & DEBUGGING. LATER RUN THIS ON ENTIRE DATASET
-    num_samples = len(seed_dataset)
+    # num_samples = len(seed_dataset)
     #print(num_samples)
-    sample_indices = np.random.choice(num_samples, size=4, replace=False)
-    seed_dataset = seed_dataset.select(sample_indices)
+    # sample_indices = np.random.choice(num_samples, size=4, replace=False)
+    # seed_dataset = seed_dataset.select(sample_indices)
     
     gen_model_count = sum(1 for model in model_card if model.get("name") in generator_model_names)
     jury_model_count = sum(1 for model in model_card if model.get("name") in jury_model_names)
@@ -135,15 +135,15 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
 
     model_details = config_models(model_card, generator_model_names, jury_model_names)
     
-    batch_size = 2
+    batch_size = 5
     for batch_num, batch_output in enumerate(
         seed_dataset.map(
             build_synthetic_dataset,
             batched=True,
             batch_size=batch_size,
             with_rank=True,
-            num_proc=1,
-            #num_proc=torch.cuda.device_count(),
+            # num_proc=1,
+            num_proc=torch.cuda.device_count(),
             fn_kwargs={
                 "model_card": model_card,
                 "model_details": model_details,
@@ -180,7 +180,7 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
     
     quality_qars = []
     evolvable_questions = []
-    max_tries = 3
+    max_tries = 2
     current_try = 1
     while current_try <= max_tries:
         # shared across all processes
@@ -255,9 +255,9 @@ def build_synthetic_dataset(batch, rank, model_card, model_details, generator_mo
             evolution_methods = []
             scores = []
             for evol_method_details in evol_methods:
-                print('---------')
-                print(evol_method_details)
-                print('-----------------')
+                # print('---------')
+                # print(evol_method_details)
+                # print('-----------------')
                 
                 # a condition to discard the error evolv method, exp: prometheus vision 
                 if evol_method_details["evolution_method"] != "Not given" and evol_method_details["total_score"] != -1:
