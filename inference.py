@@ -114,9 +114,9 @@ def config_models(model_card, generator_model_names, jury_model_names):
         "synthesizer": synthesizer
     }
 
-def build_dataset(dataset, generator_model_names, jury_model_names):
+def build_dataset(dataset, dataset_split, generator_model_names, jury_model_names):
     # Load aokvqa/scienceqa dataset
-    seed_dataset = load_and_preprocess_dataset(dataset)
+    seed_dataset = load_and_preprocess_dataset(dataset, dataset_split)
     
     # USE SAMPLES FOR TESTING & DEBUGGING. LATER RUN THIS ON ENTIRE DATASET
     # num_samples = len(seed_dataset)
@@ -136,14 +136,38 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
     model_details = config_models(model_card, generator_model_names, jury_model_names)
     
     batch_size = 5
-    for batch_num, batch_output in enumerate(
-        seed_dataset.map(
+    # for batch_num, batch_output in enumerate(
+    #     seed_dataset.map(
+    #         build_synthetic_dataset,
+    #         batched=True,
+    #         batch_size=batch_size,
+    #         with_rank=True,
+    #         # num_proc=1,
+    #         num_proc=torch.cuda.device_count(),
+    #         fn_kwargs={
+    #             "model_card": model_card,
+    #             "model_details": model_details,
+    #             "generator_model_names": generator_model_names,
+    #             "jury_model_names": jury_model_names
+    #         }
+    #     )
+    # ):
+    #     upload_batch_to_hub(
+    #         batch_num,
+    #         batch_output=batch_output,
+    #         # TODO: replace with a original repo name
+    #         repo_name="mausul/test_demo",
+    #         private=True
+    #     )
+    #     print(batch_output)
+
+    updated_dataset = seed_dataset.map(
             build_synthetic_dataset,
             batched=True,
             batch_size=batch_size,
             with_rank=True,
-            # num_proc=1,
-            num_proc=torch.cuda.device_count(),
+            num_proc=1,
+            # num_proc=torch.cuda.device_count(),
             fn_kwargs={
                 "model_card": model_card,
                 "model_details": model_details,
@@ -151,15 +175,10 @@ def build_dataset(dataset, generator_model_names, jury_model_names):
                 "jury_model_names": jury_model_names
             }
         )
-    ):
-        upload_batch_to_hub(
-            batch_num,
-            batch_output=batch_output,
-            # TODO: replace with a original repo name
-            repo_name="mausul/test_demo",
-            private=True
-        )
-        print(batch_output)
+    
+    updated_dataset.save_to_disk(f"./AOKVQA_{dataset_split}")
+    print('Processing Completed')
+
 
 
 def build_synthetic_dataset(batch, rank, model_card, model_details, generator_model_names, jury_model_names):

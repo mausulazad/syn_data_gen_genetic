@@ -67,10 +67,10 @@ FEW_SHOT_QUESTIONS = [
     "How could the objects in the image interact with one another?"
 ]
 
-def load_and_preprocess_dataset(dataset_name):
+def load_and_preprocess_dataset(dataset_name, dataset_split):
     if dataset_name == "aokvqa":
         #dataset = load_dataset("HuggingFaceM4/A-OKVQA", cache_dir=cache_dir)
-        dataset = load_dataset("HuggingFaceM4/A-OKVQA", split="train", cache_dir=cache_dir)
+        dataset = load_dataset("pltops/A-OKVQA", split=dataset_split, cache_dir=cache_dir)
         # We are generating synthetic qar by using training data as seed dataset
         # Later we will finetune using test data (and validation data as needed)
     else:
