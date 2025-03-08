@@ -6,6 +6,7 @@
 #SBATCH -t 3-00:00:00 
 #SBATCH -p gpu
 #SBATCH --gres=gpu:a100:1
+#SBATCH --constraint=a100_80gb
 #SBATCH --mem=64G
 #SBATCH -N 1 
 #SBATCH --output=log/slurm/with_evol_data_gen/log-%A-%a.log 
