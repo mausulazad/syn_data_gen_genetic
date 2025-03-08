@@ -9,7 +9,7 @@
 #SBATCH --mem=64G
 #SBATCH -N 1 
 #SBATCH --output=log/slurm/with_evol_data_gen/log-%A-%a.log 
-#SBATCH -J with_evol
+#SBATCH -J datagen
 
 export TORCH_HOME=/scratch/mi8uu/mrm/.cache
 export HF_DATASETS_CACHE=/scratch/mi8uu/mrm/.cache
